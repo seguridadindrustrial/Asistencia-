@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Registro de Asistencia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: #f0f4f8; min-height: 100vh; padding: 16px; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.12); padding: 20px; width: 100%; max-width: 600px; margin: 0 auto; }
+  h1 { font-size: 22px; color: #1f3a5f; margin-bottom: 16px; text-align: center; }
+  h2 { font-size: 16px; color: #1f3a5f; margin: 16px 0 10px; }
+  input, select { padding: 13px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; width: 100%; }
+  input:focus, select:focus { outline: 2px solid #2563eb; border-color: #2563eb; }
+  button { border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+  .btn-entrar { background: #2563eb; color: #fff; padding: 13px 18px; }
+  .btn-entrar:active { background: #1d4ed8; }
+  .btn-registrar { background: #16a34a; color: #fff; width: 100%; padding: 15px; font-size: 18px; font-weight: 600; margin-top: 6px; }
+  .btn-registrar:active { background: #15803d; }
+  .btn-secondary { background: #e2e8f0; color: #334155; padding: 12px 16px; }
+  .btn-secondary:active { background: #cbd5e1; }
+  .btn-danger { background: #dc2626; color: #fff; padding: 12px 16px; }
+  .btn-danger:active { background: #b91c1c; }
+  .mensaje { padding: 10px 12px; border-radius: 10px; font-size: 15px; margin-top: 10px; display: none; }
+  .ok { background: #dcfce7; color: #166534; display: block; }
+  .error { background: #fee2e2; color: #991b1b; display: block; }
+  .welcome { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 16px; line-height: 1.5; }
+  .admin-link { margin-top: 18px; text-align: center; }
+  .admin-link a { color: #64748b; font-size: 14px; cursor: pointer; text-decoration: underline; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .btn-row .btn-secondary { flex: 1; min-width: 120px; }
+  .hidden { display: none !important; }
+  .semana-row { margin-bottom: 14px; }
+  .semana-row label { font-size: 14px; color: #475569; font-weight: 600; display: block; margin-bottom: 5px; }
+  .dia-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 10px; background: #f8fafc; }
+  .dia-nombre { font-weight: 700; font-size: 16px; margin-bottom: 9px; color: #1f3a5f; }
+  .dia-botones { display: flex; gap: 8px; margin-bottom: 9px; }
+  .dia-botones button { flex: 1; padding: 13px; border-radius: 10px; font-size: 16px; font-weight: 600; border: 2px solid #cbd5e1; background: #fff; color: #475569; }
+  .dia-botones button.activo-si { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .dia-botones button.activo-no { background: #64748b; color: #fff; border-color: #64748b; }
+  .sel-tipo, .inp-horas, .inp-desc { margin-bottom: 9px; }
+  .inp-desc::placeholder { color: #94a3b8; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+  th, td { border: 1px solid #e2e8f0; padding: 7px 9px; text-align: left; }
+  th { background: #1f3a5f; color: #fff; }
+  tr:nth-child(even) { background: #f8fafc; }
+  .scroll { max-height: 360px; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Registro de Asistencia</h1>
+
+  <div id="vistaLogin">
+    <div style="display:flex; gap:8px;">
+      <input id="cedula" type="tel" placeholder="Ingrese su cédula" autocomplete="off" style="flex:1;">
+      <button id="btnEntrar" class="btn-entrar" style="white-space:nowrap;">Entrar</button>
+    </div>
+    <div id="mensajeLogin" class="mensaje"></div>
+    <div class="admin-link"><a id="btnAdmin">Acceso administrador</a></div>
+    <div id="adminBox" class="hidden" style="margin-top:10px;">
+      <div style="display:flex; gap:8px;">
+        <input id="adminPass" type="password" placeholder="Contraseña" autocomplete="off" style="flex:1;">
+        <button id="btnAdminEntrar" class="btn-entrar" style="white-space:nowrap;">Ingresar</button>
+      </div>
+      <div id="mensajeAdminLogin" class="mensaje"></div>
+    </div>
+  </div>
+
+  <div id="vistaPanel" class="hidden">
+    <div class="welcome">Bienvenido: <strong id="lblNombre"></strong><br>Cédula: <span id="lblCedula"></span></div>
+
+    <div class="semana-row">
+      <label for="semana">Semana del</label>
+      <input id="semana" type="date">
+    </div>
+
+    <h2>Marque cada día de la semana</h2>
+    <div id="listaDias"></div>
+
+    <button id="btnRegistrar" class="btn-registrar">Registrar asistencia</button>
+    <div id="mensajePanel" class="mensaje"></div>
+    <div class="btn-row">
+      <button id="btnSalir" class="btn-secondary">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div id="vistaAdmin" class="hidden">
+    <h2>Panel de administrador</h2>
+    <div style="overflow-x:auto;">
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Semana</th><th>Fecha</th><th>Día</th><th>Tipo</th><th>Horas</th><th>Descripción</th><th>Monto</th><th>Cédula</th><th>Nombre</th></tr></thead>
+          <tbody id="cuerpoAdmin"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button id="btnNomina1" class="btn-secondary">Descargar Nómina 1</button>
+      <button id="btnNomina2" class="btn-secondary">Descargar Nómina 2</button>
+      <button id="btnLimpiar" class="btn-danger">Limpiar</button>
+      <button id="btnSalirAdmin" class="btn-secondary">Salir</button>
+    </div>
+    <div id="mensajeAdmin" class="mensaje"></div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASSWORD = "admin123";
+
+const TIPOS_TRABAJO = [
+  { nombre: "Dia Trabajado", monto: 14 },
+  { nombre: "Guardia Nocturna", monto: 12 },
+  { nombre: "Trabajo Nocturno", monto: 15 },
+  { nombre: "Trabajo Especial", monto: 40 },
+  { nombre: "Horas Extras", montoPorHora: 2 }
+];
+
+const EMPLEADOS = [
+  { cedula: "12345678", nombre: "Leonel Lopez", tipos: ["Dia Trabajado", "Guardia Nocturna", "Horas Extras"] },
+  { cedula: "87654321", nombre: "María Gómez", tipos: ["Dia Trabajado", "Trabajo Nocturno"] },
+  { cedula: "11223344", nombre: "Carlos Ruiz", tipos: ["Trabajo Especial", "Guardia Nocturna"] },
+  { cedula: "44556677", nombre: "Ana Torres", tipos: ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo Especial", "Horas Extras"] }
+];
+
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const STORAGE_KEY = "registros_asistencia";
+
+let registros = [];
+let empleadoActual = null;
+
+function cargarRegistros() {
+  try {
+    var crudos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    registros = crudos.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
+  } catch (e) { registros = []; }
+}
+function guardarRegistros() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+}
+function mostrarMensaje(el, texto, tipo) {
+  el.textContent = texto;
+  el.className = "mensaje " + tipo;
+  setTimeout(function () { el.className = "mensaje"; }, 5000);
+}
+function lunesDeSemana(d) {
+  var diff = (d.getDay() + 6) % 7;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - diff);
+}
+function formatearFecha(d) {
+  var dd = String(d.getDate()).padStart(2, "0");
+  var mm = String(d.getMonth() + 1).padStart(2, "0");
+  return dd + "/" + mm + "/" + d.getFullYear();
+}
+function fechaTexto(d) {
+  return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+function numSemanaISO(d) {
+  var fecha = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var dia = fecha.getUTCDay() || 7;
+  fecha.setUTCDate(fecha.getUTCDate() + 4 - dia);
+  var inicioAnio = new Date(Date.UTC(fecha.getUTCFullYear(), 0, 1));
+  return Math.ceil((((fecha - inicioAnio) / 86400000) + 1) / 7);
+}
+function tipoPorNombre(nombre) {
+  return TIPOS_TRABAJO.find(function (t) { return t.nombre === nombre; });
+}
+
+function crearTarjetaDia(dia) {
+  var card = document.createElement("div");
+  card.className = "dia-card";
+
+  var nombre = document.createElement("div");
+  nombre.className = "dia-nombre";
+  nombre.textContent = dia;
+
+  var botones = document.createElement("div");
+  botones.className = "dia-botones";
+  var btnSi = document.createElement("button");
+  btnSi.type = "button";
+  btnSi.textContent = "Sí";
+  var btnNo = document.createElement("button");
+  btnNo.type = "button";
+  btnNo.textContent = "No";
+  btnNo.classList.add("activo-no");
+  botones.appendChild(btnSi);
+  botones.appendChild(btnNo);
+
+  var selTipo = document.createElement("select");
+  selTipo.className = "sel-tipo hidden";
+  selTipo.style.display = "none";
+
+  var inpHoras = document.createElement("input");
+  inpHoras.type = "number";
+  inpHoras.min = "1";
+  inpHoras.value = "1";
+  inpHoras.className = "inp-horas hidden";
+  inpHoras.style.display = "none";
+  inpHoras.placeholder = "Cantidad de horas";
+
+  var inpDesc = document.createElement("input");
+  inpDesc.type = "text";
+  inpDesc.className = "inp-desc hidden";
+  inpDesc.style.display = "none";
+  inpDesc.placeholder = "Descripción (opcional)";
+
+  btnSi.addEventListener("click", function () {
+    btnSi.classList.add("activo-si");
+    btnNo.classList.remove("activo-no");
+    rellenarTipos(selTipo);
+    selTipo.classList.remove("hidden");
+    selTipo.style.display = "";
+    actualizarCamposExtra();
+    inpDesc.classList.remove("hidden");
+    inpDesc.style.display = "";
+  });
+  btnNo.addEventListener("click", function () {
+    btnNo.classList.add("activo-no");
+    btnSi.classList.remove("activo-si");
+    selTipo.classList.add("hidden");
+    selTipo.style.display = "none";
+    selTipo.innerHTML = "";
+    inpHoras.classList.add("hidden");
+    inpHoras.style.display = "none";
+    inpDesc.classList.add("hidden");
+    inpDesc.style.display = "none";
+    inpDesc.value = "";
+  });
+
+  function actualizarCamposExtra() {
+    var t = tipoPorNombre(selTipo.value);
+    if (t && t.montoPorHora) {
+      inpHoras.classList.remove("hidden");
+      inpHoras.style.display = "";
+    } else {
+      inpHoras.classList.add("hidden");
+      inpHoras.style.display = "none";
+    }
+  }
+  selTipo.addEventListener("change", actualizarCamposExtra);
+
+  card.appendChild(nombre);
+  card.appendChild(botones);
+  card.appendChild(selTipo);
+  card.appendChild(inpHoras);
+  card.appendChild(inpDesc);
+  return card;
+}
+function rellenarTipos(selTipo) {
+  selTipo.innerHTML = "";
+  empleadoActual.tipos.forEach(function (t) {
+    var o = document.createElement("option");
+    o.value = t;
+    o.textContent = t;
+    selTipo.appendChild(o);
+  });
+}
+
+function entrar() {
+  var cedula = document.getElementById("cedula").value.trim();
+  var msg = document.getElementById("mensajeLogin");
+  var emp = EMPLEADOS.find(function (e) { return e.cedula === cedula; });
+  if (!emp) {
+    mostrarMensaje(msg, "Cédula no registrada. Verifique e intente de nuevo.", "error");
+    return;
+  }
+  empleadoActual = emp;
+  document.getElementById("lblNombre").textContent = emp.nombre;
+  document.getElementById("lblCedula").textContent = emp.cedula;
+
+  var lista = document.getElementById("listaDias");
+  lista.innerHTML = "";
+  DIAS.forEach(function (dia) { lista.appendChild(crearTarjetaDia(dia)); });
+
+  document.getElementById("semana").value = lunesDeSemana(new Date()).toISOString().slice(0, 10);
+  document.getElementById("vistaLogin").classList.add("hidden");
+  document.getElementById("vistaPanel").classList.remove("hidden");
+  document.getElementById("cedula").value = "";
+  document.getElementById("mensajePanel").className = "mensaje";
+}
+
+function salir() {
+  empleadoActual = null;
+  document.getElementById("vistaPanel").classList.add("hidden");
+  document.getElementById("vistaLogin").classList.remove("hidden");
+  document.getElementById("cedula").focus();
+}
+
+function registrar() {
+  var semanaVal = document.getElementById("semana").value;
+  var lunes = new Date(semanaVal + "T00:00:00");
+  var cards = document.querySelectorAll("#listaDias .dia-card");
+  var nuevos = [];
+  cards.forEach(function (card, i) {
+    var btnSi = card.querySelector(".dia-botones button:first-child");
+    if (!btnSi.classList.contains("activo-si")) return;
+    var selTipo = card.querySelector(".sel-tipo");
+    var inpHoras = card.querySelector(".inp-horas");
+    var inpDesc = card.querySelector(".inp-desc");
+    var fecha = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i);
+    var tipoObj = tipoPorNombre(selTipo.value);
+    var horas = tipoObj.montoPorHora ? parseInt(inpHoras.value, 10) || 1 : 0;
+    var monto = tipoObj.montoPorHora ? tipoObj.montoPorHora * horas : tipoObj.monto;
+    nuevos.push({
+      semana: formatearFecha(lunes),
+      semanaFin: formatearFecha(new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6)),
+      numSemana: numSemanaISO(lunes),
+      fecha: formatearFecha(fecha),
+      fechaTexto: fechaTexto(fecha),
+      dia: DIAS[i],
+      tipo: tipoObj.nombre,
+      horas: horas,
+      descripcion: inpDesc.value.trim(),
+      monto: monto,
+      cedula: empleadoActual.cedula,
+      nombre: empleadoActual.nombre
+    });
+  });
+  if (!nuevos.length) {
+    mostrarMensaje(document.getElementById("mensajePanel"), "Debe marcar al menos un día como Sí.", "error");
+    return;
+  }
+  registros = registros.concat(nuevos);
+  guardarRegistros();
+
+  var lista = document.getElementById("listaDias");
+  lista.innerHTML = "";
+  DIAS.forEach(function (dia) { lista.appendChild(crearTarjetaDia(dia)); });
+
+  mostrarMensaje(document.getElementById("mensajePanel"), "Asistencia de la semana registrada correctamente.", "ok");
+}
+
+function renderAdmin() {
+  var tbody = document.getElementById("cuerpoAdmin");
+  tbody.innerHTML = "";
+  registros.forEach(function (r) {
+    var tr = document.createElement("tr");
+    [r.semana, r.fecha, r.dia, r.tipo, r.horas || "", r.descripcion || "", "$" + r.monto, r.cedula, r.nombre].forEach(function (v) {
+      var td = document.createElement("td");
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function entrarAdmin() {
+  var pass = document.getElementById("adminPass").value;
+  var msg = document.getElementById("mensajeAdminLogin");
+  if (pass !== ADMIN_PASSWORD) {
+    mostrarMensaje(msg, "Contraseña incorrecta.", "error");
+    return;
+  }
+  document.getElementById("vistaLogin").classList.add("hidden");
+  document.getElementById("vistaAdmin").classList.remove("hidden");
+  document.getElementById("adminBox").classList.add("hidden");
+  document.getElementById("adminPass").value = "";
+  renderAdmin();
+}
+function salirAdmin() {
+  document.getElementById("vistaAdmin").classList.add("hidden");
+  document.getElementById("vistaLogin").classList.remove("hidden");
+  document.getElementById("cedula").focus();
+}
+
+function agruparPorEmpleado() {
+  var orden = [];
+  var mapa = {};
+  registros.forEach(function (r) {
+    if (!mapa[r.cedula]) {
+      mapa[r.cedula] = { cedula: r.cedula, nombre: r.nombre, items: [] };
+      orden.push(mapa[r.cedula]);
+    }
+    mapa[r.cedula].items.push(r);
+  });
+  orden.forEach(function (g) {
+    g.total = g.items.reduce(function (s, r) { return s + r.monto; }, 0);
+  });
+  return orden;
+}
+function descripcionFinal(item) {
+  var base = item.tipo;
+  if (item.horas) base = item.tipo + " (" + item.horas + ")";
+  if (item.descripcion) return base + ": " + item.descripcion;
+  return base;
+}
+
+function descargarNomina1() {
+  if (!registros.length) { alert("No hay registros para descargar."); return; }
+  var grupos = agruparPorEmpleado();
+  var primer = registros[0];
+  var totalGeneral = registros.reduce(function (s, r) { return s + r.monto; }, 0);
+
+  var aoa = [];
+  aoa.push(["GERENCIA DE MANTENIMIENTO PREVENTIVO Y SEGURIDAD INDUSTRIAL"]);
+  aoa.push(["LA FLORIDA TRIPLE A Y ORDEN Y LIMPIEZA"]);
+  aoa.push(["SEMANA Nº" + primer.numSemana + " (O&L Pago diario  Avances  O&L/ MTTO PREV Pago Diario 14$)", "", "", "", "", "SEMANA DE " + primer.semana + " AL " + primer.semanaFin]);
+  aoa.push(["Nº", "FECHA", "DESCRIPCIÓN", "COLABORADOR", "", "MONTO TOTAL"]);
+
+  var filasTotales = [];
+  grupos.forEach(function (g) {
+    g.items.forEach(function (item, i) {
+      aoa.push([i + 1, item.fechaTexto, descripcionFinal(item), item.nombre, item.cedula, item.monto]);
+    });
+    var idx = aoa.length;
+    aoa.push(["", "", "", "", "", g.total]);
+    filasTotales.push(idx);
+    aoa.push([""]);
+  });
+  var filaTotalGeneral = aoa.length;
+  aoa.push(["NOTA:", "", "", "MONTO TOTAL", "", totalGeneral]);
+
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 50 }, { wch: 24 }, { wch: 14 }, { wch: 12 }];
+  ws["!merges"] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+    { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
+    { s: { r: 2, c: 4 }, e: { r: 2, c: 5 } }
+  ];
+
+  ws["A1"].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center", vertical: "center" } };
+  ws["A2"].s = { font: { bold: true, sz: 13 }, alignment: { horizontal: "center", vertical: "center" } };
+  ws["A3"].s = { font: { bold: true, sz: 11 } };
+  ws["F3"].s = { font: { bold: true, sz: 11 }, alignment: { horizontal: "right" } };
+  ["A4", "B4", "C4", "D4", "E4", "F4"].forEach(function (c) {
+    ws[c].s = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" }, fill: { fgColor: { rgb: "D9E1F2" } } };
+  });
+
+  for (var r = 4; r <= aoa.length - 1; r++) {
+    var celda = ws["F" + (r + 1)];
+    if (!celda) continue;
+    celda.s = { numFmt: "0.00", alignment: { horizontal: "right" } };
+  }
+  filasTotales.forEach(function (idx) {
+    var celda = ws["F" + (idx + 1)];
+    if (celda) celda.s = { font: { bold: true }, numFmt: "0.00", alignment: { horizontal: "right" } };
+  });
+  var cta = ws["F" + (filaTotalGeneral + 1)];
+  if (cta) cta.s = { font: { bold: true }, numFmt: "0.00", alignment: { horizontal: "right" } };
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Nomina 1");
+  XLSX.writeFile(wb, "Nomina1.xlsx");
+}
+
+function descargarNomina2() {
+  alert("El formato de la Nómina 2 aún no está definido.");
+}
+
+function limpiar() {
+  if (!registros.length) return;
+  if (confirm("¿Seguro que desea borrar todos los registros guardados?")) {
+    registros = [];
+    guardarRegistros();
+    renderAdmin();
+  }
+}
+
+document.getElementById("btnEntrar").addEventListener("click", entrar);
+document.getElementById("cedula").addEventListener("keydown", function (e) { if (e.key === "Enter") entrar(); });
+document.getElementById("btnSalir").addEventListener("click", salir);
+document.getElementById("btnRegistrar").addEventListener("click", registrar);
+document.getElementById("btnAdmin").addEventListener("click", function () {
+  document.getElementById("adminBox").classList.toggle("hidden");
+});
+document.getElementById("btnAdminEntrar").addEventListener("click", entrarAdmin);
+document.getElementById("adminPass").addEventListener("keydown", function (e) { if (e.key === "Enter") entrarAdmin(); });
+document.getElementById("btnSalirAdmin").addEventListener("click", salirAdmin);
+document.getElementById("btnNomina1").addEventListener("click", descargarNomina1);
+document.getElementById("btnNomina2").addEventListener("click", descargarNomina2);
+document.getElementById("btnLimpiar").addEventListener("click", limpiar);
+
+cargarRegistros();
+document.getElementById("cedula").focus();
+</script>
+</body>
+</html>
