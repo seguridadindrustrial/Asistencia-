@@ -41,6 +41,11 @@
   .dia-botones button.activo-no { background: #64748b; color: #fff; border-color: #64748b; }
   .sel-tipo, .inp-horas, .inp-desc { margin-bottom: 9px; }
   .inp-desc::placeholder { color: #94a3b8; }
+  .trabajo { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; padding: 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+  .btn-quitar { align-self: flex-end; background: #fee2e2; color: #991b1b; padding: 8px 14px; font-size: 14px; border-radius: 8px; }
+  .btn-quitar:active { background: #fecaca; }
+  .btn-agregar { width: 100%; background: #eff6ff; color: #1e40af; border: 1px dashed #93c5fd; padding: 12px; font-size: 15px; margin-top: 2px; }
+  .btn-agregar:active { background: #dbeafe; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
   th, td { border: 1px solid #e2e8f0; padding: 7px 9px; text-align: left; }
   th { background: #1f3a5f; color: #fff; }
@@ -113,15 +118,27 @@ const TIPOS_TRABAJO = [
   { nombre: "Dia Trabajado", monto: 14 },
   { nombre: "Guardia Nocturna", monto: 12 },
   { nombre: "Trabajo Nocturno", monto: 15 },
+  { nombre: "Trabajo de Madrugada", monto: 15 },
   { nombre: "Trabajo Especial", monto: 40 },
-  { nombre: "Horas Extras", montoPorHora: 2 }
+  { nombre: "Horas Extras", montoPorHora: 2 },
+  { nombre: "Domingo Trabajado", monto: 20 }
+
 ];
 
 const EMPLEADOS = [
-  { cedula: "12345678", nombre: "Leonel Lopez", tipos: ["Dia Trabajado", "Guardia Nocturna", "Horas Extras"] },
-  { cedula: "87654321", nombre: "María Gómez", tipos: ["Dia Trabajado", "Trabajo Nocturno"] },
-  { cedula: "11223344", nombre: "Carlos Ruiz", tipos: ["Trabajo Especial", "Guardia Nocturna"] },
-  { cedula: "44556677", nombre: "Ana Torres", tipos: ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo Especial", "Horas Extras"] }
+  { cedula: "9863644", nombre: "LEONEL LÓPEZ", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"] },
+  { cedula: "7992727", nombre: "DIONICIO  PEÑALOZA", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"] },
+  { cedula: "14379756", nombre:"ANGEL MARTINEZ", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"] },
+  { cedula: "14970816", nombre: "SANDRY FUENMAYOR", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"]},
+  { cedula: "19684951", nombre: "ENRIQUE MARIN", tipos: ["Dia Trabajado","Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"]},
+  { cedula: "6516060", nombre: "RAFAEL LEAL", tipos: ["Dia Trabajado","Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"]},
+  { cedula: "16670026", nombre: "YASIRIS PABON", tipos: ["Dia Trabajado", "Domingo Trabajdo"]},
+  { cedula: "13291333", nombre: "MARBELYS ALVARADO", tipos: ["Horas Extras", "Domingo Trabajdo"]},
+  { cedula: "15948681", nombre: "LILLYS AUDIVET", tipos: ["Horas Extras", "Domingo Trabajdo"]},
+  { cedula: "10537934", nombre: "LUCRECIA ALVARADO", tipos: ["Horas Extras", "Domingo Trabajdo"]},
+  { cedula: "24087770", nombre: "MILENIS PEREIRA", tipos: ["Horas Extras", "Domingo Trabajdo"]},
+  { cedula: "14728429", nombre: "RONALD ALVILLARE", tipos: ["Horas Extras"]},
+  { cedula: "00000000", nombre: "00", tipos: ["Horas Extras"]}
 ];
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -167,6 +184,53 @@ function tipoPorNombre(nombre) {
   return TIPOS_TRABAJO.find(function (t) { return t.nombre === nombre; });
 }
 
+function crearFilaTrabajo() {
+  var fila = document.createElement("div");
+  fila.className = "trabajo";
+
+  var selTipo = document.createElement("select");
+  selTipo.className = "sel-tipo";
+
+  var inpHoras = document.createElement("input");
+  inpHoras.type = "number";
+  inpHoras.min = "1";
+  inpHoras.value = "1";
+  inpHoras.className = "inp-horas hidden";
+  inpHoras.style.display = "none";
+  inpHoras.placeholder = "Horas";
+
+  var inpDesc = document.createElement("input");
+  inpDesc.type = "text";
+  inpDesc.className = "inp-desc";
+  inpDesc.placeholder = "Descripción (opcional)";
+
+  var btnQuitar = document.createElement("button");
+  btnQuitar.type = "button";
+  btnQuitar.className = "btn-quitar";
+  btnQuitar.textContent = "Quitar";
+
+  rellenarTipos(selTipo);
+
+  function actualizarHoras() {
+    var t = tipoPorNombre(selTipo.value);
+    if (t && t.montoPorHora) {
+      inpHoras.classList.remove("hidden");
+      inpHoras.style.display = "";
+    } else {
+      inpHoras.classList.add("hidden");
+      inpHoras.style.display = "none";
+    }
+  }
+  selTipo.addEventListener("change", actualizarHoras);
+  actualizarHoras();
+
+  fila.appendChild(selTipo);
+  fila.appendChild(inpHoras);
+  fila.appendChild(inpDesc);
+  fila.appendChild(btnQuitar);
+  return fila;
+}
+
 function crearTarjetaDia(dia) {
   var card = document.createElement("div");
   card.className = "dia-card";
@@ -187,64 +251,56 @@ function crearTarjetaDia(dia) {
   botones.appendChild(btnSi);
   botones.appendChild(btnNo);
 
-  var selTipo = document.createElement("select");
-  selTipo.className = "sel-tipo hidden";
-  selTipo.style.display = "none";
+  var lista = document.createElement("div");
+  lista.className = "lista-trabajos hidden";
+  lista.style.display = "none";
 
-  var inpHoras = document.createElement("input");
-  inpHoras.type = "number";
-  inpHoras.min = "1";
-  inpHoras.value = "1";
-  inpHoras.className = "inp-horas hidden";
-  inpHoras.style.display = "none";
-  inpHoras.placeholder = "Cantidad de horas";
+  var btnAgregar = document.createElement("button");
+  btnAgregar.type = "button";
+  btnAgregar.className = "btn-agregar hidden";
+  btnAgregar.style.display = "none";
+  btnAgregar.textContent = "+ Agregar otro trabajo este día";
 
-  var inpDesc = document.createElement("input");
-  inpDesc.type = "text";
-  inpDesc.className = "inp-desc hidden";
-  inpDesc.style.display = "none";
-  inpDesc.placeholder = "Descripción (opcional)";
+  function actualizarQuitar() {
+    var filas = lista.querySelectorAll(".trabajo");
+    filas.forEach(function (f) {
+      var q = f.querySelector(".btn-quitar");
+      q.style.display = filas.length > 1 ? "" : "none";
+    });
+  }
+  function agregarFila() {
+    var f = crearFilaTrabajo();
+    var q = f.querySelector(".btn-quitar");
+    q.addEventListener("click", function () { f.remove(); actualizarQuitar(); });
+    lista.appendChild(f);
+    actualizarQuitar();
+  }
 
   btnSi.addEventListener("click", function () {
     btnSi.classList.add("activo-si");
     btnNo.classList.remove("activo-no");
-    rellenarTipos(selTipo);
-    selTipo.classList.remove("hidden");
-    selTipo.style.display = "";
-    actualizarCamposExtra();
-    inpDesc.classList.remove("hidden");
-    inpDesc.style.display = "";
+    if (!lista.querySelector(".trabajo")) agregarFila();
+    lista.classList.remove("hidden");
+    lista.style.display = "";
+    btnAgregar.classList.remove("hidden");
+    btnAgregar.style.display = "";
   });
   btnNo.addEventListener("click", function () {
     btnNo.classList.add("activo-no");
     btnSi.classList.remove("activo-si");
-    selTipo.classList.add("hidden");
-    selTipo.style.display = "none";
-    selTipo.innerHTML = "";
-    inpHoras.classList.add("hidden");
-    inpHoras.style.display = "none";
-    inpDesc.classList.add("hidden");
-    inpDesc.style.display = "none";
-    inpDesc.value = "";
+    lista.classList.add("hidden");
+    lista.style.display = "none";
+    lista.innerHTML = "";
+    btnAgregar.classList.add("hidden");
+    btnAgregar.style.display = "none";
   });
 
-  function actualizarCamposExtra() {
-    var t = tipoPorNombre(selTipo.value);
-    if (t && t.montoPorHora) {
-      inpHoras.classList.remove("hidden");
-      inpHoras.style.display = "";
-    } else {
-      inpHoras.classList.add("hidden");
-      inpHoras.style.display = "none";
-    }
-  }
-  selTipo.addEventListener("change", actualizarCamposExtra);
+  btnAgregar.addEventListener("click", agregarFila);
 
   card.appendChild(nombre);
   card.appendChild(botones);
-  card.appendChild(selTipo);
-  card.appendChild(inpHoras);
-  card.appendChild(inpDesc);
+  card.appendChild(lista);
+  card.appendChild(btnAgregar);
   return card;
 }
 function rellenarTipos(selTipo) {
@@ -295,26 +351,29 @@ function registrar() {
   cards.forEach(function (card, i) {
     var btnSi = card.querySelector(".dia-botones button:first-child");
     if (!btnSi.classList.contains("activo-si")) return;
-    var selTipo = card.querySelector(".sel-tipo");
-    var inpHoras = card.querySelector(".inp-horas");
-    var inpDesc = card.querySelector(".inp-desc");
+    var filas = card.querySelectorAll(".lista-trabajos .trabajo");
     var fecha = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i);
-    var tipoObj = tipoPorNombre(selTipo.value);
-    var horas = tipoObj.montoPorHora ? parseInt(inpHoras.value, 10) || 1 : 0;
-    var monto = tipoObj.montoPorHora ? tipoObj.montoPorHora * horas : tipoObj.monto;
-    nuevos.push({
-      semana: formatearFecha(lunes),
-      semanaFin: formatearFecha(new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6)),
-      numSemana: numSemanaISO(lunes),
-      fecha: formatearFecha(fecha),
-      fechaTexto: fechaTexto(fecha),
-      dia: DIAS[i],
-      tipo: tipoObj.nombre,
-      horas: horas,
-      descripcion: inpDesc.value.trim(),
-      monto: monto,
-      cedula: empleadoActual.cedula,
-      nombre: empleadoActual.nombre
+    filas.forEach(function (fila) {
+      var selTipo = fila.querySelector(".sel-tipo");
+      var inpHoras = fila.querySelector(".inp-horas");
+      var inpDesc = fila.querySelector(".inp-desc");
+      var tipoObj = tipoPorNombre(selTipo.value);
+      var horas = tipoObj.montoPorHora ? parseInt(inpHoras.value, 10) || 1 : 0;
+      var monto = tipoObj.montoPorHora ? tipoObj.montoPorHora * horas : tipoObj.monto;
+      nuevos.push({
+        semana: formatearFecha(lunes),
+        semanaFin: formatearFecha(new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6)),
+        numSemana: numSemanaISO(lunes),
+        fecha: formatearFecha(fecha),
+        fechaTexto: fechaTexto(fecha),
+        dia: DIAS[i],
+        tipo: tipoObj.nombre,
+        horas: horas,
+        descripcion: inpDesc.value.trim(),
+        monto: monto,
+        cedula: empleadoActual.cedula,
+        nombre: empleadoActual.nombre
+      });
     });
   });
   if (!nuevos.length) {
