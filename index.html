@@ -25,6 +25,7 @@
   .mensaje { padding: 10px 12px; border-radius: 10px; font-size: 15px; margin-top: 10px; display: none; }
   .ok { background: #dcfce7; color: #166534; display: block; }
   .error { background: #fee2e2; color: #991b1b; display: block; }
+  .info { background: #eff6ff; color: #1e40af; display: block; }
   .welcome { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 16px; line-height: 1.5; }
   .admin-link { margin-top: 18px; text-align: center; }
   .admin-link a { color: #64748b; font-size: 14px; cursor: pointer; text-decoration: underline; }
@@ -39,13 +40,10 @@
   .dia-botones button { flex: 1; padding: 13px; border-radius: 10px; font-size: 16px; font-weight: 600; border: 2px solid #cbd5e1; background: #fff; color: #475569; }
   .dia-botones button.activo-si { background: #16a34a; color: #fff; border-color: #16a34a; }
   .dia-botones button.activo-no { background: #64748b; color: #fff; border-color: #64748b; }
-  .sel-tipo, .inp-horas, .inp-desc { margin-bottom: 9px; }
+  .inp-desc, .sel-he, .inp-he-horas { margin-bottom: 9px; }
   .inp-desc::placeholder { color: #94a3b8; }
-  .trabajo { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; padding: 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
-  .btn-quitar { align-self: flex-end; background: #fee2e2; color: #991b1b; padding: 8px 14px; font-size: 14px; border-radius: 8px; }
-  .btn-quitar:active { background: #fecaca; }
-  .btn-agregar { width: 100%; background: #eff6ff; color: #1e40af; border: 1px dashed #93c5fd; padding: 12px; font-size: 15px; margin-top: 2px; }
-  .btn-agregar:active { background: #dbeafe; }
+  .btn-quitar-dia { width: 100%; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 10px; font-size: 14px; margin-top: 2px; }
+  .btn-quitar-dia:active { background: #e2e8f0; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
   th, td { border: 1px solid #e2e8f0; padding: 7px 9px; text-align: left; }
   th { background: #1f3a5f; color: #fff; }
@@ -82,6 +80,7 @@
     </div>
 
     <h2>Marque cada día de la semana</h2>
+    <div id="notaDias" class="mensaje"></div>
     <div id="listaDias"></div>
 
     <button id="btnRegistrar" class="btn-registrar">Registrar asistencia</button>
@@ -96,7 +95,7 @@
     <div style="overflow-x:auto;">
       <div class="scroll">
         <table>
-          <thead><tr><th>Semana</th><th>Fecha</th><th>Día</th><th>Tipo</th><th>Horas</th><th>Descripción</th><th>Monto</th><th>Cédula</th><th>Nombre</th></tr></thead>
+          <thead><tr><th>Semana</th><th>Fecha</th><th>Día</th><th>Tipo</th><th>Horas</th><th>Descripción</th><th>Monto</th><th>Categoría</th><th>Cédula</th><th>Nombre</th></tr></thead>
           <tbody id="cuerpoAdmin"></tbody>
         </table>
       </div>
@@ -114,23 +113,61 @@
 <script>
 const ADMIN_PASSWORD = "admin123";
 
-const TIPOS_TRABAJO = [
-  { nombre: "Dia Trabajado", monto: 14 },
-  { nombre: "Guardia Nocturna", monto: 12 },
-  { nombre: "Trabajo Nocturno", monto: 15 },
-  { nombre: "Trabajo de Madrugada", monto: 15 },
-  { nombre: "Trabajo Especial", monto: 40 },
-  { nombre: "Horas Extras", montoPorHora: 2 },
-  { nombre: "Domingo Trabajado", monto: 20 }
+const TIPOS_POR_HORA = ["Horas Extras"];
 
-];
+const PRECIOS = {
+  "O&L Avance": {
+    "Dia Trabajado": 14,
+    "Guardia Nocturna": 12,
+    "Trabajo Nocturno": 15,
+    "Trabajo de Madrugada": 15,
+    "Trabajo Especial": 40,
+    "Horas Extras": 2,
+    "Domingo Trabajado": 24,
+    "Dia de Trabajo": 12,
+    "Trabajo Domingo": 18
+  },
+  "O&L Fijo": {
+    "Dia Trabajado": 14,
+    "Guardia Nocturna": 12,
+    "Trabajo Nocturno": 15,
+    "Trabajo de Madrugada": 15,
+    "Trabajo Especial": 40,
+    "Horas Extras": 2,
+    "Domingo Trabajado": 24,
+    "Dia de Trabajo": 12,
+    "Trabajo Domingo": 18
+  },
+  "Tecnicos Avance": {
+    "Dia Trabajado": 14,
+    "Guardia Nocturna": 12,
+    "Trabajo Nocturno": 15,
+    "Trabajo de Madrugada": 15,
+    "Trabajo Especial": 40,
+    "Horas Extras": 2,
+    "Domingo Trabajado": 24,
+    "Dia de Trabajo": 12,
+    "Trabajo Domingo": 18
+  },
+  "Tecnicos Fijo": {
+    "Dia Trabajado": 14,
+    "Guardia Nocturna": 12,
+    "Trabajo Nocturno": 15,
+    "Trabajo de Madrugada": 15,
+    "Trabajo Especial": 40,
+    "Horas Extras": 2,
+    "Domingo Trabajado": 24,
+    "Dia de Trabajo": 12,
+    "Trabajo Domingo": 18
+  }
+};
 
 const EMPLEADOS = [
   { cedula: "9863644", nombre: "LEONEL LÓPEZ", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"] },
   { cedula: "7992727", nombre: "DIONICIO  PEÑALOZA", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"] },
   { cedula: "14379756", nombre:"ANGEL MARTINEZ", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"] },
   { cedula: "14970816", nombre: "SANDRY FUENMAYOR", tipos: ["Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"]},
-  { cedula: "19684951", nombre: "ENRIQUE MARIN", tipos: ["Dia Trabajado","Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"]},
+  { cedula: "11", nombre: "ENRIQUE MARIN", tipos: ["Dia Trabajado","Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"]},
   { cedula: "6516060", nombre: "RAFAEL LEAL", tipos: ["Dia Trabajado","Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada", "Trabajo Nocturno"]},
   { cedula: "16670026", nombre: "YASIRIS PABON", tipos: ["Dia Trabajado", "Domingo Trabajdo"]},
   { cedula: "13291333", nombre: "MARBELYS ALVARADO", tipos: ["Horas Extras", "Domingo Trabajdo"]},
@@ -138,14 +175,16 @@ const EMPLEADOS = [
   { cedula: "10537934", nombre: "LUCRECIA ALVARADO", tipos: ["Horas Extras", "Domingo Trabajdo"]},
   { cedula: "24087770", nombre: "MILENIS PEREIRA", tipos: ["Horas Extras", "Domingo Trabajdo"]},
   { cedula: "14728429", nombre: "RONALD ALVILLARE", tipos: ["Horas Extras"]},
-  { cedula: "00000000", nombre: "00", tipos: ["Horas Extras"]}
+  { cedula: "0000", nombre: "00", tipos: ["Horas Extras"]}
 ];
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const STORAGE_KEY = "registros_asistencia";
+const FINALIZADOS_KEY = "asistencias_finalizados";
 
 let registros = [];
 let empleadoActual = null;
+let diasQuitados = [];
 
 function cargarRegistros() {
   try {
@@ -155,6 +194,15 @@ function cargarRegistros() {
 }
 function guardarRegistros() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+}
+function cargarFinalizados() {
+  try {
+    var f = JSON.parse(localStorage.getItem(FINALIZADOS_KEY)) || [];
+    return f.filter(function (x) { return x && x.cedula && x.semana && x.dia; });
+  } catch (e) { return []; }
+}
+function guardarFinalizados(f) {
+  localStorage.setItem(FINALIZADOS_KEY, JSON.stringify(f));
 }
 function mostrarMensaje(el, texto, tipo) {
   el.textContent = texto;
@@ -180,60 +228,31 @@ function numSemanaISO(d) {
   var inicioAnio = new Date(Date.UTC(fecha.getUTCFullYear(), 0, 1));
   return Math.ceil((((fecha - inicioAnio) / 86400000) + 1) / 7);
 }
-function tipoPorNombre(nombre) {
-  return TIPOS_TRABAJO.find(function (t) { return t.nombre === nombre; });
+function esPorHora(tipo) {
+  return TIPOS_POR_HORA.indexOf(tipo) >= 0;
 }
-
-function crearFilaTrabajo() {
-  var fila = document.createElement("div");
-  fila.className = "trabajo";
-
-  var selTipo = document.createElement("select");
-  selTipo.className = "sel-tipo";
-
-  var inpHoras = document.createElement("input");
-  inpHoras.type = "number";
-  inpHoras.min = "1";
-  inpHoras.value = "1";
-  inpHoras.className = "inp-horas hidden";
-  inpHoras.style.display = "none";
-  inpHoras.placeholder = "Horas";
-
-  var inpDesc = document.createElement("input");
-  inpDesc.type = "text";
-  inpDesc.className = "inp-desc";
-  inpDesc.placeholder = "Descripción (opcional)";
-
-  var btnQuitar = document.createElement("button");
-  btnQuitar.type = "button";
-  btnQuitar.className = "btn-quitar";
-  btnQuitar.textContent = "Quitar";
-
-  rellenarTipos(selTipo);
-
-  function actualizarHoras() {
-    var t = tipoPorNombre(selTipo.value);
-    if (t && t.montoPorHora) {
-      inpHoras.classList.remove("hidden");
-      inpHoras.style.display = "";
-    } else {
-      inpHoras.classList.add("hidden");
-      inpHoras.style.display = "none";
-    }
-  }
-  selTipo.addEventListener("change", actualizarHoras);
-  actualizarHoras();
-
-  fila.appendChild(selTipo);
-  fila.appendChild(inpHoras);
-  fila.appendChild(inpDesc);
-  fila.appendChild(btnQuitar);
-  return fila;
+function categoriaDe(emp) {
+  return emp.categoria || "O&L Avance";
+}
+function precioDe(tipo) {
+  return PRECIOS[categoriaDe(empleadoActual)][tipo];
+}
+function tipoDomingoDe(emp) {
+  return emp.tipoDomingo || "Domingo Trabajado";
+}
+function modoDeDia(dia) {
+  var cat = categoriaDe(empleadoActual);
+  if (dia === "Domingo") return "autoDomingo";
+  if (cat === "O&L Fijo" || cat === "Tecnicos Fijo") return "fijo";
+  return "avance";
 }
 
 function crearTarjetaDia(dia) {
+  var modo = modoDeDia(dia);
   var card = document.createElement("div");
   card.className = "dia-card";
+  card.setAttribute("data-dia", dia);
+  card.noExplicito = false;
 
   var nombre = document.createElement("div");
   nombre.className = "dia-nombre";
@@ -247,70 +266,136 @@ function crearTarjetaDia(dia) {
   var btnNo = document.createElement("button");
   btnNo.type = "button";
   btnNo.textContent = "No";
-  btnNo.classList.add("activo-no");
   botones.appendChild(btnSi);
   botones.appendChild(btnNo);
 
-  var lista = document.createElement("div");
-  lista.className = "lista-trabajos hidden";
-  lista.style.display = "none";
+  var cont = document.createElement("div");
+  cont.className = "cont-dia hidden";
+  cont.style.display = "none";
 
-  var btnAgregar = document.createElement("button");
-  btnAgregar.type = "button";
-  btnAgregar.className = "btn-agregar hidden";
-  btnAgregar.style.display = "none";
-  btnAgregar.textContent = "+ Agregar otro trabajo este día";
+  if (modo === "fijo") {
+    var selHe = document.createElement("select");
+    selHe.className = "sel-he";
+    var opNo = document.createElement("option");
+    opNo.value = "No";
+    opNo.textContent = "Horas extras: No";
+    var opSi = document.createElement("option");
+    opSi.value = "Sí";
+    opSi.textContent = "Horas extras: Sí";
+    selHe.appendChild(opNo);
+    selHe.appendChild(opSi);
 
-  function actualizarQuitar() {
-    var filas = lista.querySelectorAll(".trabajo");
-    filas.forEach(function (f) {
-      var q = f.querySelector(".btn-quitar");
-      q.style.display = filas.length > 1 ? "" : "none";
+    var inpHoras = document.createElement("input");
+    inpHoras.type = "number";
+    inpHoras.min = "1";
+    inpHoras.value = "1";
+    inpHoras.className = "inp-he-horas hidden";
+    inpHoras.style.display = "none";
+    inpHoras.placeholder = "Cantidad de horas";
+
+    var inpDesc = document.createElement("input");
+    inpDesc.type = "text";
+    inpDesc.className = "inp-desc";
+    inpDesc.placeholder = "Descripción (opcional)";
+
+    selHe.addEventListener("change", function () {
+      if (selHe.value === "Sí") {
+        inpHoras.classList.remove("hidden");
+        inpHoras.style.display = "";
+      } else {
+        inpHoras.classList.add("hidden");
+        inpHoras.style.display = "none";
+      }
     });
-  }
-  function agregarFila() {
-    var f = crearFilaTrabajo();
-    var q = f.querySelector(".btn-quitar");
-    q.addEventListener("click", function () { f.remove(); actualizarQuitar(); });
-    lista.appendChild(f);
-    actualizarQuitar();
+
+    cont.appendChild(selHe);
+    cont.appendChild(inpHoras);
+    cont.appendChild(inpDesc);
+  } else {
+    var inpDesc = document.createElement("input");
+    inpDesc.type = "text";
+    inpDesc.className = "inp-desc";
+    inpDesc.placeholder = "Descripción (opcional)";
+    cont.appendChild(inpDesc);
   }
 
   btnSi.addEventListener("click", function () {
     btnSi.classList.add("activo-si");
     btnNo.classList.remove("activo-no");
-    if (!lista.querySelector(".trabajo")) agregarFila();
-    lista.classList.remove("hidden");
-    lista.style.display = "";
-    btnAgregar.classList.remove("hidden");
-    btnAgregar.style.display = "";
+    card.noExplicito = false;
+    cont.classList.remove("hidden");
+    cont.style.display = "";
   });
   btnNo.addEventListener("click", function () {
     btnNo.classList.add("activo-no");
     btnSi.classList.remove("activo-si");
-    lista.classList.add("hidden");
-    lista.style.display = "none";
-    lista.innerHTML = "";
-    btnAgregar.classList.add("hidden");
-    btnAgregar.style.display = "none";
+    card.noExplicito = true;
+    cont.classList.add("hidden");
+    cont.style.display = "none";
+    var descs = cont.querySelectorAll(".inp-desc");
+    descs.forEach(function (d) { d.value = ""; });
+    var selHe = cont.querySelector(".sel-he");
+    if (selHe) selHe.value = "No";
+    var heHoras = cont.querySelector(".inp-he-horas");
+    if (heHoras) {
+      heHoras.classList.add("hidden");
+      heHoras.style.display = "none";
+    }
   });
 
-  btnAgregar.addEventListener("click", agregarFila);
+  var btnQuitarDia = document.createElement("button");
+  btnQuitarDia.type = "button";
+  btnQuitarDia.className = "btn-quitar-dia";
+  btnQuitarDia.textContent = "Quitar día de la lista";
+  btnQuitarDia.addEventListener("click", function () {
+    diasQuitados.push(dia);
+    card.remove();
+    actualizarNota();
+  });
 
   card.appendChild(nombre);
   card.appendChild(botones);
-  card.appendChild(lista);
-  card.appendChild(btnAgregar);
+  card.appendChild(cont);
+  card.appendChild(btnQuitarDia);
   return card;
 }
-function rellenarTipos(selTipo) {
-  selTipo.innerHTML = "";
-  empleadoActual.tipos.forEach(function (t) {
-    var o = document.createElement("option");
-    o.value = t;
-    o.textContent = t;
-    selTipo.appendChild(o);
+
+function diasRegistrados() {
+  var semanaVal = document.getElementById("semana").value;
+  var lunes = new Date(semanaVal + "T00:00:00");
+  var semStr = formatearFecha(lunes);
+  var marcados = {};
+  registros.forEach(function (r) {
+    if (r.cedula === empleadoActual.cedula && r.semana === semStr && r.tipo !== "libre") marcados[r.dia] = true;
   });
+  cargarFinalizados().forEach(function (f) {
+    if (f.cedula === empleadoActual.cedula && f.semana === semStr) marcados[f.dia] = true;
+  });
+  return marcados;
+}
+
+function actualizarNota() {
+  var lista = document.getElementById("listaDias");
+  var restantes = lista.querySelectorAll(".dia-card").length;
+  var nota = document.getElementById("notaDias");
+  if (restantes === 0) {
+    nota.textContent = "No quedan días pendientes en la lista.";
+    nota.className = "mensaje ok";
+  } else {
+    nota.textContent = "Te faltan " + restantes + " día(s) de esta semana por marcar.";
+    nota.className = "mensaje info";
+  }
+}
+
+function construirDiasSemana() {
+  var lista = document.getElementById("listaDias");
+  lista.innerHTML = "";
+  var marcados = diasRegistrados();
+  DIAS.forEach(function (dia) {
+    if (marcados[dia]) return;
+    lista.appendChild(crearTarjetaDia(dia));
+  });
+  actualizarNota();
 }
 
 function entrar() {
@@ -325,11 +410,8 @@ function entrar() {
   document.getElementById("lblNombre").textContent = emp.nombre;
   document.getElementById("lblCedula").textContent = emp.cedula;
 
-  var lista = document.getElementById("listaDias");
-  lista.innerHTML = "";
-  DIAS.forEach(function (dia) { lista.appendChild(crearTarjetaDia(dia)); });
-
   document.getElementById("semana").value = lunesDeSemana(new Date()).toISOString().slice(0, 10);
+  construirDiasSemana();
   document.getElementById("vistaLogin").classList.add("hidden");
   document.getElementById("vistaPanel").classList.remove("hidden");
   document.getElementById("cedula").value = "";
@@ -346,48 +428,114 @@ function salir() {
 function registrar() {
   var semanaVal = document.getElementById("semana").value;
   var lunes = new Date(semanaVal + "T00:00:00");
+  var semStr = formatearFecha(lunes);
+  var semFin = formatearFecha(new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6));
+  var numSem = numSemanaISO(lunes);
+  var cedula = empleadoActual.cedula;
+  var cat = categoriaDe(empleadoActual);
+  var esAvance = cat.indexOf("Avance") >= 0;
   var cards = document.querySelectorAll("#listaDias .dia-card");
   var nuevos = [];
-  cards.forEach(function (card, i) {
-    var btnSi = card.querySelector(".dia-botones button:first-child");
-    if (!btnSi.classList.contains("activo-si")) return;
-    var filas = card.querySelectorAll(".lista-trabajos .trabajo");
-    var fecha = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i);
-    filas.forEach(function (fila) {
-      var selTipo = fila.querySelector(".sel-tipo");
-      var inpHoras = fila.querySelector(".inp-horas");
-      var inpDesc = fila.querySelector(".inp-desc");
-      var tipoObj = tipoPorNombre(selTipo.value);
-      var horas = tipoObj.montoPorHora ? parseInt(inpHoras.value, 10) || 1 : 0;
-      var monto = tipoObj.montoPorHora ? tipoObj.montoPorHora * horas : tipoObj.monto;
-      nuevos.push({
-        semana: formatearFecha(lunes),
-        semanaFin: formatearFecha(new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6)),
-        numSemana: numSemanaISO(lunes),
-        fecha: formatearFecha(fecha),
-        fechaTexto: fechaTexto(fecha),
-        dia: DIAS[i],
-        tipo: tipoObj.nombre,
-        horas: horas,
-        descripcion: inpDesc.value.trim(),
-        monto: monto,
-        cedula: empleadoActual.cedula,
-        nombre: empleadoActual.nombre
-      });
+  var fin = cargarFinalizados();
+  var finKeys = {};
+  var marcadosFinalizados = 0;
+
+  function marcarFinalizado(dia) {
+    var key = cedula + "|" + semStr + "|" + dia;
+    if (!finKeys[key]) {
+      finKeys[key] = true;
+      fin.push({ cedula: cedula, semana: semStr, dia: dia });
+      marcadosFinalizados++;
+    }
+  }
+  function reemplazarDia(dia) {
+    registros = registros.filter(function (r) {
+      return !(r.cedula === cedula && r.semana === semStr && r.dia === dia);
     });
+  }
+  function baseDe(dia) {
+    var i = DIAS.indexOf(dia);
+    var fecha = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i);
+    return {
+      semana: semStr,
+      semanaFin: semFin,
+      numSemana: numSem,
+      fecha: formatearFecha(fecha),
+      fechaTexto: fechaTexto(fecha),
+      dia: dia,
+      cedula: cedula,
+      nombre: empleadoActual.nombre,
+      categoria: cat
+    };
+  }
+
+  cards.forEach(function (card) {
+    var dia = card.getAttribute("data-dia");
+    var btnSi = card.querySelector(".dia-botones button:first-child");
+    var base = baseDe(dia);
+    var modo = modoDeDia(dia);
+
+    if (btnSi.classList.contains("activo-si")) {
+      reemplazarDia(dia);
+      if (modo === "fijo") {
+        var selHe = card.querySelector(".sel-he");
+        var inpHoras = card.querySelector(".inp-he-horas");
+        var inpDesc = card.querySelector(".inp-desc");
+        var desc = inpDesc.value.trim();
+        if (selHe.value === "Sí") {
+          var horas = parseInt(inpHoras.value, 10) || 1;
+          nuevos.push(Object.assign({}, base, {
+            tipo: "Horas Extras",
+            horas: horas,
+            descripcion: desc,
+            monto: precioDe("Horas Extras") * horas
+          }));
+        }
+        marcarFinalizado(dia);
+      } else {
+        var inpDesc = card.querySelector(".inp-desc");
+        var tipo = modo === "autoDomingo" ? tipoDomingoDe(empleadoActual) : "Dia Trabajado";
+        nuevos.push(Object.assign({}, base, {
+          tipo: tipo,
+          horas: 0,
+          descripcion: inpDesc.value.trim(),
+          monto: precioDe(tipo)
+        }));
+        marcarFinalizado(dia);
+      }
+    } else if (card.noExplicito) {
+      if (esAvance) {
+        reemplazarDia(dia);
+        nuevos.push(Object.assign({}, base, {
+          tipo: "libre",
+          horas: 0,
+          descripcion: "",
+          monto: 0
+        }));
+      } else {
+        marcarFinalizado(dia);
+      }
+    }
   });
-  if (!nuevos.length) {
+
+  diasQuitados.forEach(function (dia) {
+    reemplazarDia(dia);
+    marcarFinalizado(dia);
+  });
+  diasQuitados = [];
+
+  if (!nuevos.length && !marcadosFinalizados) {
     mostrarMensaje(document.getElementById("mensajePanel"), "Debe marcar al menos un día como Sí.", "error");
     return;
   }
-  registros = registros.concat(nuevos);
-  guardarRegistros();
+  if (marcadosFinalizados) guardarFinalizados(fin);
+  if (nuevos.length) {
+    registros = registros.concat(nuevos);
+    guardarRegistros();
+  }
 
-  var lista = document.getElementById("listaDias");
-  lista.innerHTML = "";
-  DIAS.forEach(function (dia) { lista.appendChild(crearTarjetaDia(dia)); });
-
-  mostrarMensaje(document.getElementById("mensajePanel"), "Asistencia de la semana registrada correctamente.", "ok");
+  construirDiasSemana();
+  mostrarMensaje(document.getElementById("mensajePanel"), "Asistencia registrada correctamente.", "ok");
 }
 
 function renderAdmin() {
@@ -395,7 +543,7 @@ function renderAdmin() {
   tbody.innerHTML = "";
   registros.forEach(function (r) {
     var tr = document.createElement("tr");
-    [r.semana, r.fecha, r.dia, r.tipo, r.horas || "", r.descripcion || "", "$" + r.monto, r.cedula, r.nombre].forEach(function (v) {
+    [r.semana, r.fecha, r.dia, r.tipo, r.horas || "", r.descripcion || "", "$" + r.monto, r.categoria || "O&L Avance", r.cedula, r.nombre].forEach(function (v) {
       var td = document.createElement("td");
       td.textContent = v;
       tr.appendChild(td);
@@ -509,10 +657,11 @@ function descargarNomina2() {
 }
 
 function limpiar() {
-  if (!registros.length) return;
+  if (!registros.length && !cargarFinalizados().length) return;
   if (confirm("¿Seguro que desea borrar todos los registros guardados?")) {
     registros = [];
     guardarRegistros();
+    guardarFinalizados([]);
     renderAdmin();
   }
 }
