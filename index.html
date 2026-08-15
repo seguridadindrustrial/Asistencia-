@@ -141,7 +141,7 @@ const TIPOS_PORTERO = {
 
 const PRECIOS = {
   "O&L Avance": {
-    "Dia Trabajado": 14,
+    "Dia Trabajado": 12,
     "Domingo Trabajado": 18
   },
   "O&L Fijo": {
@@ -248,9 +248,6 @@ function categoriaDe(emp) {
 }
 function precioDe(tipo) {
   return PRECIOS[categoriaDe(empleadoActual)][tipo];
-}
-function tipoDomingoDe(emp) {
-  return emp.tipoDomingo || "Domingo Trabajado";
 }
 function modoDeDia(dia) {
   var cat = categoriaDe(empleadoActual);
@@ -743,10 +740,11 @@ function salirAdmin() {
   document.getElementById("cedula").focus();
 }
 
-function agruparPorEmpleado() {
+function agruparPorEmpleado(fuente) {
+  fuente = fuente || registros;
   var orden = [];
   var mapa = {};
-  registros.forEach(function (r) {
+  fuente.forEach(function (r) {
     if (!mapa[r.cedula]) {
       mapa[r.cedula] = { cedula: r.cedula, nombre: r.nombre, items: [] };
       orden.push(mapa[r.cedula]);
@@ -824,8 +822,92 @@ function descargarNomina1() {
   XLSX.writeFile(wb, "Nomina1.xlsx");
 }
 
+function descripcionNomina2(item) {
+  var cat = categoriaDeItem(item);
+  var t = item.tipo;
+  if (cat === "O&L Avance") {
+    if (t === "Dia Trabajado") return "Avances OL Día - Aumento 1ro Feb";
+    if (t === "Domingo Trabajado") return "Domingos y Feriado (Avances) II (S.G)";
+  }
+  if (cat === "O&L Fijo" && t === "Domingo Trabajado") return "Domingo y Feriado (PF) (S.G)";
+  if (t === "Dia Trabajado") return "Día de Trabajo (SG) Ajustes";
+  var comunes = {
+    "Trabajo Nocturno": "Trabajo Nocturno (S.G)",
+    "Guardia Nocturna": "Guardia Nocturna (S.G)",
+    "Trabajo de Madrugada": "Guardia Nocturna (Full) S.G",
+    "Trabajo Especial": "Trabajo Extraordinario (S.G)",
+    "Horas Extras": "Horas Extras (S.G)",
+    "Domingo Trabajado": "Domingo Trabajado (S.G)"
+  };
+  return comunes[t] || t;
+}
+
+function categoriaDeItem(item) {
+  if (item.categoria) return item.categoria;
+  var emp = EMPLEADOS.find(function (e) { return e.cedula === item.cedula; });
+  return emp ? emp.categoria : "Tecnicos Fijo";
+}
+
+function areaNomina2(item) {
+  var cat = categoriaDeItem(item);
+  if (cat.indexOf("O&L") === 0) return "Orden y Limpieza (S.G)";
+  return "Servicios Generales";
+}
+
+function cedulaPuntos(c) {
+  return String(c).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function montoTexto(m) {
+  return "$" + m.toFixed(2).replace(".", ",");
+}
+
+function fechaAmericana(f) {
+  var p = String(f).split("/");
+  return Number(p[1]) + "/" + Number(p[0]) + "/" + p[2];
+}
+
 function descargarNomina2() {
-  alert("El formato de la Nómina 2 aún no está definido.");
+  var conDatos = registros.filter(function (r) { return r.tipo !== "libre"; });
+  if (!conDatos.length) { alert("No hay registros para descargar."); return; }
+  var grupos = agruparPorEmpleado(conDatos);
+  var diaNum = { "Lunes": 1, "Martes": 2, "Miércoles": 3, "Jueves": 4, "Viernes": 5, "Sábado": 6, "Domingo": 7 };
+  var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+  var aoa = [];
+  aoa.push(["№ Día", "№ Semana", "Fecha (Doble Click)", "Descripción", "Observaciones", "Área", "Colaborador", "Cédula", "Cantidad Horas (Si Aplica)", "Monto", "MES", "AÑO", "MES AÑO"]);
+
+  grupos.forEach(function (g) {
+    g.items.forEach(function (item) {
+      var p = String(item.fecha).split("/");
+      aoa.push([
+        diaNum[item.dia] || "",
+        item.numSemana || "",
+        fechaAmericana(item.fecha),
+        descripcionNomina2(item),
+        item.descripcion ? descripcionFinal(item) : "",
+        areaNomina2(item),
+        item.nombre,
+        cedulaPuntos(item.cedula),
+        item.horas || "",
+        montoTexto(item.monto),
+        Number(p[1]),
+        Number(p[2]),
+        meses[Number(p[1]) - 1] + " del " + p[2]
+      ]);
+    });
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [{ wch: 7 }, { wch: 9 }, { wch: 14 }, { wch: 34 }, { wch: 60 }, { wch: 22 }, { wch: 24 }, { wch: 15 }, { wch: 14 }, { wch: 12 }, { wch: 6 }, { wch: 7 }, { wch: 16 }];
+  for (var c = 0; c < 13; c++) {
+    var celda = ws[XLSX.utils.encode_cell({ r: 0, c: c })];
+    if (celda) celda.s = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" }, fill: { fgColor: { rgb: "D9E1F2" } } };
+  }
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Nomina 2");
+  XLSX.writeFile(wb, "Nomina2.xlsx");
 }
 
 function limpiar() {
