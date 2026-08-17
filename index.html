@@ -129,23 +129,29 @@ const ADMIN_PASSWORD = "admin123";
 const TIPOS_POR_HORA = ["Horas Extras"];
 
 const TIPOS_TECNICO_FIJO = {
-  "entre semana": ["Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras"],
+  "entre semana": ["Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras", "Feriado"],
   "domingo": ["Domingo Trabajado", "Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada"]
 };
 
 const TIPOS_TECNICO_AVANCE = {
-  "entre semana": ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras"],
+  "entre semana": ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras", "Feriado"],
   "domingo": ["Domingo Trabajado", "Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada"]
 };
 
 const TIPOS_PORTERO = {
-  "entre semana": ["Horas Extras"],
+  "entre semana": ["Horas Extras", "Feriado"],
   "domingo": ["Domingo Trabajado", "Trabajo Especial"]
+};
+
+const TIPOS_O_L_AVANCE = {
+  "entre semana": ["Dia Trabajado", "Trabajo Nocturno Avances"],
+  "domingo": ["Domingo Trabajado"]
 };
 
 const PRECIOS = {
   "O&L Avance": {
     "Dia Trabajado": 12,
+    "Trabajo Nocturno Avances": 12,
     "Domingo Trabajado": 18
   },
   "O&L Fijo": {
@@ -160,6 +166,7 @@ const PRECIOS = {
     "Trabajo de Madrugada": 15,
     "Trabajo Especial": 40,
     "Horas Extras": 2,
+    "Feriado": 16,
     "Domingo Trabajado": 24
   },
   "Tecnicos Fijo": {
@@ -169,11 +176,13 @@ const PRECIOS = {
     "Trabajo de Madrugada": 15,
     "Trabajo Especial": 40,
     "Horas Extras": 2,
+    "Feriado": 16,
     "Domingo Trabajado": 24
   },
   "Porteros": {
     "Trabajo Especial": 40,
     "Horas Extras": 2,
+    "Feriado": 16,
     "Domingo Trabajado": 24
   }
 };
@@ -255,7 +264,7 @@ function precioDe(tipo) {
 }
 function modoDeDia(dia) {
   var cat = categoriaDe(empleadoActual);
-  if (cat === "Tecnicos Fijo" || cat === "Tecnicos Avance" || cat === "Porteros") return "seleccion";
+  if (cat === "Tecnicos Fijo" || cat === "Tecnicos Avance" || cat === "Porteros" || cat === "O&L Avance") return "seleccion";
   if (dia === "Domingo") return "autoDomingo";
   if (cat === "O&L Fijo") return "fijo";
   return "avance";
@@ -265,6 +274,7 @@ function tiposDeDia(dia) {
   var lista;
   if (cat === "Tecnicos Fijo") lista = TIPOS_TECNICO_FIJO;
   else if (cat === "Tecnicos Avance") lista = TIPOS_TECNICO_AVANCE;
+  else if (cat === "O&L Avance") lista = TIPOS_O_L_AVANCE;
   else lista = TIPOS_PORTERO;
   return dia === "Domingo" ? lista.domingo : lista["entre semana"];
 }
@@ -840,10 +850,12 @@ function descripcionNomina2(item) {
   var t = item.tipo;
   if (cat === "O&L Avance") {
     if (t === "Dia Trabajado") return "Avances OL Día - Aumento 1ro Feb";
+    if (t === "Trabajo Nocturno Avances") return "Avances OL Noche - Aumento 1ro Feb";
     if (t === "Domingo Trabajado") return "Domingos y Feriado (Avances) II (S.G)";
   }
   if (cat === "O&L Fijo" && t === "Domingo Trabajado") return "Domingo y Feriado (PF) (S.G)";
   if (t === "Dia Trabajado") return "Día de Trabajo (SG) Ajustes";
+  if (t === "Feriado") return "Día de Trabajo (Feriado) (S.G)";
   var comunes = {
     "Trabajo Nocturno": "Trabajo Nocturno (S.G)",
     "Guardia Nocturna": "Guardia Nocturna (S.G)",
