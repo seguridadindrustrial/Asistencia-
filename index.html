@@ -618,6 +618,19 @@ function registrar() {
     };
   }
 
+  var descVacios = 0;
+  cards.forEach(function (card) {
+    var btnSi = card.querySelector(".dia-botones button:first-child");
+    if (!btnSi.classList.contains("activo-si")) return;
+    card.querySelectorAll(".inp-desc").forEach(function (d) {
+      if (!d.value.trim()) descVacios++;
+    });
+  });
+  if (descVacios) {
+    mostrarMensaje(document.getElementById("mensajePanel"), "La descripción es obligatoria en " + descVacios + " campo(s).", "error");
+    return;
+  }
+
   cards.forEach(function (card) {
     var dia = card.getAttribute("data-dia");
     var btnSi = card.querySelector(".dia-botones button:first-child");
@@ -812,7 +825,7 @@ function descargarNomina1() {
   var filasTotales = [];
   grupos.forEach(function (g) {
     g.items.forEach(function (item, i) {
-      aoa.push([i + 1, item.fechaTexto, descripcionFinal(item), item.nombre, item.cedula, item.monto]);
+      aoa.push([i + 1, item.fechaTexto, descripcionFinal(item), item.nombre, cedulaPuntos(item.cedula), item.monto]);
     });
     var idx = aoa.length;
     aoa.push(["", "", "", "", "", g.total]);
@@ -853,7 +866,7 @@ function descargarNomina1() {
 
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Nomina 1");
-  XLSX.writeFile(wb, "Nomina1_" + info.semana.replace(/\//g, "-") + ".xlsx");
+  XLSX.writeFile(wb, "semana " + info.numSemana + ".xlsx");
 }
 
 function descripcionNomina2(item) {
@@ -945,7 +958,7 @@ function descargarNomina2() {
 
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Nomina 2");
-  XLSX.writeFile(wb, "Nomina2_" + info.semana.replace(/\//g, "-") + ".xlsx");
+  XLSX.writeFile(wb, "semana " + info.numSemana + " panel.xlsx");
 }
 
 function limpiar() {
