@@ -126,12 +126,12 @@ const TIPOS_POR_HORA = ["Horas Extras"];
 
 const TIPOS_TECNICO_FIJO = {
   "entre semana": ["Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras"],
-  "domingo": ["Domingo Trabajado", "Trabajo Especial"]
+  "domingo": ["Domingo Trabajado", "Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada"]
 };
 
 const TIPOS_TECNICO_AVANCE = {
   "entre semana": ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras"],
-  "domingo": ["Domingo Trabajado", "Trabajo Especial"]
+  "domingo": ["Domingo Trabajado", "Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada"]
 };
 
 const TIPOS_PORTERO = {
@@ -377,23 +377,11 @@ function crearTarjetaDia(dia) {
       if (!lista.querySelector(".trabajo")) agregarFila();
     });
   } else if (modo === "fijo") {
-    var selHe = document.createElement("select");
-    selHe.className = "sel-he";
-    var opNo = document.createElement("option");
-    opNo.value = "No";
-    opNo.textContent = "Horas extras: No";
-    var opSi = document.createElement("option");
-    opSi.value = "Sí";
-    opSi.textContent = "Horas extras: Sí";
-    selHe.appendChild(opNo);
-    selHe.appendChild(opSi);
-
     var inpHoras = document.createElement("input");
     inpHoras.type = "number";
     inpHoras.min = "1";
     inpHoras.value = "1";
-    inpHoras.className = "inp-he-horas hidden";
-    inpHoras.style.display = "none";
+    inpHoras.className = "inp-he-horas";
     inpHoras.placeholder = "Cantidad de horas";
 
     var inpDesc = document.createElement("input");
@@ -401,17 +389,6 @@ function crearTarjetaDia(dia) {
     inpDesc.className = "inp-desc";
     inpDesc.placeholder = "Descripción (opcional)";
 
-    selHe.addEventListener("change", function () {
-      if (selHe.value === "Sí") {
-        inpHoras.classList.remove("hidden");
-        inpHoras.style.display = "";
-      } else {
-        inpHoras.classList.add("hidden");
-        inpHoras.style.display = "none";
-      }
-    });
-
-    cont.appendChild(selHe);
     cont.appendChild(inpHoras);
     cont.appendChild(inpDesc);
   } else {
@@ -428,6 +405,11 @@ function crearTarjetaDia(dia) {
     card.noExplicito = false;
     cont.classList.remove("hidden");
     cont.style.display = "";
+    var heHoras = cont.querySelector(".inp-he-horas");
+    if (heHoras) {
+      heHoras.classList.remove("hidden");
+      heHoras.style.display = "";
+    }
   });
   btnNo.addEventListener("click", function () {
     btnNo.classList.add("activo-no");
@@ -439,8 +421,6 @@ function crearTarjetaDia(dia) {
     if (lista) lista.innerHTML = "";
     var descs = cont.querySelectorAll(".inp-desc");
     descs.forEach(function (d) { d.value = ""; });
-    var selHe = cont.querySelector(".sel-he");
-    if (selHe) selHe.value = "No";
     var heHoras = cont.querySelector(".inp-he-horas");
     if (heHoras) {
       heHoras.classList.add("hidden");
@@ -478,13 +458,6 @@ function resetTarjeta(card) {
   var lista = cont.querySelector(".lista-trabajos");
   if (lista) lista.innerHTML = "";
   card.querySelectorAll(".inp-desc").forEach(function (d) { d.value = ""; });
-  var selHe = card.querySelector(".sel-he");
-  if (selHe) selHe.value = "No";
-  var heHoras = card.querySelector(".inp-he-horas");
-  if (heHoras) {
-    heHoras.classList.add("hidden");
-    heHoras.style.display = "none";
-  }
 }
 
 function renderBarraQuitados() {
@@ -647,19 +620,15 @@ function registrar() {
         });
         marcarFinalizado(dia);
       } else if (modo === "fijo") {
-        var selHe = card.querySelector(".sel-he");
         var inpHoras = card.querySelector(".inp-he-horas");
         var inpDesc = card.querySelector(".inp-desc");
-        var desc = inpDesc.value.trim();
-        if (selHe.value === "Sí") {
-          var horas = parseInt(inpHoras.value, 10) || 1;
-          nuevos.push(Object.assign({}, base, {
-            tipo: "Horas Extras",
-            horas: horas,
-            descripcion: desc,
-            monto: precioDe("Horas Extras") * horas
-          }));
-        }
+        var horas = parseInt(inpHoras.value, 10) || 1;
+        nuevos.push(Object.assign({}, base, {
+          tipo: "Horas Extras",
+          horas: horas,
+          descripcion: inpDesc ? inpDesc.value.trim() : "",
+          monto: precioDe("Horas Extras") * horas
+        }));
         marcarFinalizado(dia);
       } else {
         var inpDesc = card.querySelector(".inp-desc");
