@@ -129,17 +129,17 @@ const ADMIN_PASSWORD = "admin123";
 const TIPOS_POR_HORA = ["Horas Extras"];
 
 const TIPOS_TECNICO_FIJO = {
-  "entre semana": ["Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras", "Feriado"],
+  "entre semana": ["Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras"],
   "domingo": ["Domingo Trabajado", "Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada"]
 };
 
 const TIPOS_TECNICO_AVANCE = {
-  "entre semana": ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras", "Feriado"],
+  "entre semana": ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras"],
   "domingo": ["Domingo Trabajado", "Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada"]
 };
 
 const TIPOS_PORTERO = {
-  "entre semana": ["Horas Extras", "Feriado"],
+  "entre semana": ["Horas Extras"],
   "domingo": ["Domingo Trabajado", "Trabajo Especial"]
 };
 
@@ -147,6 +147,13 @@ const TIPOS_O_L_AVANCE = {
   "entre semana": ["Dia Trabajado", "Trabajo Nocturno Avances"],
   "domingo": ["Domingo Trabajado"]
 };
+
+const FERIADOS = ["01/01", "16/02", "17/02", "02/04", "03/04", "19/04", "01/05", "24/06", "05/07", "24/07", "12/10", "24/12", "25/12"];
+
+function esFeriado(fecha) {
+  var p = String(fecha).split("/");
+  return FERIADOS.indexOf(p[0] + "/" + p[1]) >= 0;
+}
 
 const PRECIOS = {
   "O&L Avance": {
@@ -623,6 +630,7 @@ function registrar() {
           var inpHoras = fila.querySelector(".inp-horas");
           var inpDesc = fila.querySelector(".inp-desc");
           var tipo = selTipo.value;
+          if (tipo === "Dia Trabajado" && esFeriado(base.fecha)) tipo = "Feriado";
           var horas = esPorHora(tipo) ? parseInt(inpHoras.value, 10) || 1 : 0;
           var monto = esPorHora(tipo) ? precioDe(tipo) * horas : precioDe(tipo);
           nuevos.push(Object.assign({}, base, {
