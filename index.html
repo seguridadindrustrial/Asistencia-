@@ -854,7 +854,7 @@ function descargarNomina2() {
         item.numSemana || "",
         fechaAmericana(item.fecha),
         descripcionNomina2(item),
-        item.descripcion ? descripcionFinal(item) : "",
+        item.descripcion || "",
         areaNomina2(item),
         item.nombre,
         cedulaPuntos(item.cedula),
