@@ -101,6 +101,10 @@
 
   <div id="vistaAdmin" class="hidden">
     <h2>Panel de administrador</h2>
+    <div style="margin-bottom:10px;">
+      <label for="selSemanaAdmin" style="font-size:14px;color:#475569;font-weight:600;">Semana:</label>
+      <select id="selSemanaAdmin" style="padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:14px;margin-left:8px;"></select>
+    </div>
     <div style="overflow-x:auto;">
       <div class="scroll">
         <table>
@@ -676,10 +680,46 @@ function registrar() {
   mostrarMensaje(document.getElementById("mensajePanel"), "Asistencia registrada correctamente.", "ok");
 }
 
+function semanasDisponibles() {
+  var mapa = {};
+  registros.forEach(function (r) { if (r.semana && !mapa[r.semana]) mapa[r.semana] = r.semanaFin || ""; });
+  return Object.keys(mapa).sort().map(function (s) { return { semana: s, semanaFin: mapa[s] }; });
+}
+
+function cargarSemanasAdmin() {
+  var sel = document.getElementById("selSemanaAdmin");
+  sel.innerHTML = "";
+  semanasDisponibles().forEach(function (s) {
+    var o = document.createElement("option");
+    o.value = s.semana;
+    o.textContent = "Semana del " + s.semana + " al " + s.semanaFin;
+    sel.appendChild(o);
+  });
+}
+
+function semanaAdmin() {
+  return document.getElementById("selSemanaAdmin").value;
+}
+
+function registrosDeSemana(sem) {
+  if (!sem) return registros;
+  return registros.filter(function (r) { return r.semana === sem; });
+}
+
+function semanaAdminInfo() {
+  var sem = semanaAdmin();
+  for (var i = 0; i < registros.length; i++) {
+    if (registros[i].semana === sem) return { semana: registros[i].semana, semanaFin: registros[i].semanaFin, numSemana: registros[i].numSemana };
+  }
+  return null;
+}
+
 function renderAdmin() {
+  var sem = semanaAdmin();
+  var filtrados = registrosDeSemana(sem);
   var tbody = document.getElementById("cuerpoAdmin");
   tbody.innerHTML = "";
-  registros.forEach(function (r) {
+  filtrados.forEach(function (r) {
     var tr = document.createElement("tr");
     [r.semana, r.fecha, r.dia, r.tipo, r.horas || "", r.descripcion || "", "$" + r.monto, r.categoria || "O&L Avance", r.cedula, r.nombre].forEach(function (v) {
       var td = document.createElement("td");
@@ -701,7 +741,9 @@ function entrarAdmin() {
   document.getElementById("vistaAdmin").classList.remove("hidden");
   document.getElementById("adminBox").classList.add("hidden");
   document.getElementById("adminPass").value = "";
+  cargarSemanasAdmin();
   renderAdmin();
+  document.getElementById("selSemanaAdmin").addEventListener("change", renderAdmin);
 }
 function salirAdmin() {
   document.getElementById("vistaAdmin").classList.add("hidden");
@@ -733,15 +775,17 @@ function descripcionFinal(item) {
 }
 
 function descargarNomina1() {
-  if (!registros.length) { alert("No hay registros para descargar."); return; }
-  var grupos = agruparPorEmpleado();
-  var primer = registros[0];
-  var totalGeneral = registros.reduce(function (s, r) { return s + r.monto; }, 0);
+  var sem = semanaAdmin();
+  var fuente = registrosDeSemana(sem);
+  if (!fuente.length) { alert("No hay registros para esta semana."); return; }
+  var info = semanaAdminInfo();
+  var grupos = agruparPorEmpleado(fuente);
+  var totalGeneral = fuente.reduce(function (s, r) { return s + r.monto; }, 0);
 
   var aoa = [];
   aoa.push(["GERENCIA DE MANTENIMIENTO PREVENTIVO Y SEGURIDAD INDUSTRIAL"]);
   aoa.push(["LA FLORIDA TRIPLE A Y ORDEN Y LIMPIEZA"]);
-  aoa.push(["SEMANA Nº" + primer.numSemana + " (O&L Pago diario  Avances  O&L/ MTTO PREV Pago Diario 14$)", "", "", "", "", "SEMANA DE " + primer.semana + " AL " + primer.semanaFin]);
+  aoa.push(["SEMANA Nº" + info.numSemana + " (O&L Pago diario  Avances  O&L/ MTTO PREV Pago Diario 14$)", "", "", "", "", "SEMANA DE " + info.semana + " AL " + info.semanaFin]);
   aoa.push(["Nº", "FECHA", "DESCRIPCIÓN", "COLABORADOR", "", "MONTO TOTAL"]);
 
   var filasTotales = [];
@@ -788,7 +832,7 @@ function descargarNomina1() {
 
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Nomina 1");
-  XLSX.writeFile(wb, "Nomina1.xlsx");
+  XLSX.writeFile(wb, "Nomina1_" + info.semana.replace(/\//g, "-") + ".xlsx");
 }
 
 function descripcionNomina2(item) {
@@ -837,8 +881,10 @@ function fechaAmericana(f) {
 }
 
 function descargarNomina2() {
-  var conDatos = registros.filter(function (r) { return r.tipo !== "libre"; });
-  if (!conDatos.length) { alert("No hay registros para descargar."); return; }
+  var sem = semanaAdmin();
+  var conDatos = registrosDeSemana(sem).filter(function (r) { return r.tipo !== "libre"; });
+  if (!conDatos.length) { alert("No hay registros para esta semana."); return; }
+  var info = semanaAdminInfo();
   var grupos = agruparPorEmpleado(conDatos);
   var diaNum = { "Lunes": 1, "Martes": 2, "Miércoles": 3, "Jueves": 4, "Viernes": 5, "Sábado": 6, "Domingo": 7 };
   var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -876,7 +922,7 @@ function descargarNomina2() {
 
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Nomina 2");
-  XLSX.writeFile(wb, "Nomina2.xlsx");
+  XLSX.writeFile(wb, "Nomina2_" + info.semana.replace(/\//g, "-") + ".xlsx");
 }
 
 function limpiar() {
@@ -885,6 +931,7 @@ function limpiar() {
     registros = [];
     guardarRegistros();
     guardarFinalizados([]);
+    cargarSemanasAdmin();
     renderAdmin();
   }
 }
