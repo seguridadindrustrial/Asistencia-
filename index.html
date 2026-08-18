@@ -828,20 +828,20 @@ function descargarNomina1() {
       aoa.push([i + 1, item.fechaTexto, descripcionFinal(item), item.nombre, cedulaPuntos(item.cedula), item.monto]);
     });
     var idx = aoa.length;
-    aoa.push(["", "", "", "", "", g.total]);
+    aoa.push(["", "", "", "", "", "", g.total]);
     filasTotales.push(idx);
     aoa.push([""]);
   });
   var filaTotalGeneral = aoa.length;
-  aoa.push(["NOTA:", "", "", "MONTO TOTAL", "", totalGeneral]);
+  aoa.push(["NOTA:", "", "", "MONTO TOTAL", "", "", totalGeneral]);
 
   var ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 50 }, { wch: 24 }, { wch: 14 }, { wch: 12 }];
+  ws["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 50 }, { wch: 24 }, { wch: 14 }, { wch: 12 }, { wch: 12 }];
   ws["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },
     { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
-    { s: { r: 2, c: 4 }, e: { r: 2, c: 5 } }
+    { s: { r: 2, c: 4 }, e: { r: 2, c: 6 } }
   ];
 
   ws["A1"].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center", vertical: "center" } };
@@ -858,10 +858,10 @@ function descargarNomina1() {
     celda.s = { numFmt: "0.00", alignment: { horizontal: "right" } };
   }
   filasTotales.forEach(function (idx) {
-    var celda = ws["F" + (idx + 1)];
+    var celda = ws["G" + (idx + 1)];
     if (celda) celda.s = { font: { bold: true }, numFmt: "0.00", alignment: { horizontal: "right" } };
   });
-  var cta = ws["F" + (filaTotalGeneral + 1)];
+  var cta = ws["G" + (filaTotalGeneral + 1)];
   if (cta) cta.s = { font: { bold: true }, numFmt: "0.00", alignment: { horizontal: "right" } };
 
   var wb = XLSX.utils.book_new();
