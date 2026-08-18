@@ -302,6 +302,17 @@ function calcularHorasHE(entrada, salida) {
   return Math.round(diff / 60 * 100) / 100;
 }
 
+function horarioPorTipo(tipo, categoria) {
+  if (categoria === "Porteros") {
+    if (tipo === "Trabajo Nocturno" || tipo === "Guardia Nocturna") return { entrada: "16:00", salida: "22:00" };
+    if (tipo !== "Horas Extras") return { entrada: "07:00", salida: "15:00" };
+  }
+  if (tipo === "Trabajo Nocturno" || tipo === "Guardia Nocturna" || tipo === "Trabajo Nocturno Avances") return { entrada: "18:00", salida: "23:00" };
+  if (tipo === "Trabajo de Madrugada") return { entrada: "00:00", salida: "07:00" };
+  if (tipo !== "Horas Extras") return { entrada: "08:00", salida: "17:00" };
+  return null;
+}
+
 function crearFilaTrabajo(dia) {
   var fila = document.createElement("div");
   fila.className = "trabajo";
@@ -346,30 +357,33 @@ function crearFilaTrabajo(dia) {
   rellenarTipos(selTipo, dia);
 
   function actualizarHoras() {
-    if (esPorHora(selTipo.value)) {
-      inpHE.classList.remove("hidden");
-      inpHE.style.display = "";
-      inpHoras.classList.add("hidden");
-      inpHoras.style.display = "none";
-    } else {
-      inpHE.classList.add("hidden");
-      inpHE.style.display = "none";
-      inpHoras.classList.remove("hidden");
-      inpHoras.style.display = "";
-    }
+    inpHE.classList.remove("hidden");
+    inpHE.style.display = "";
+    inpHoras.classList.add("hidden");
+    inpHoras.style.display = "none";
   }
   function actualizarCalcHE() {
     var h = calcularHorasHE(inpEntrada.value, inpSalida.value);
     lblH.textContent = h ? h + " hora(s)" : "0 horas";
     inpHoras.value = h || 1;
-    if (inpEntrada.value && inpSalida.value) {
-      inpDesc.value = inpEntrada.value + " - " + inpSalida.value;
+  }
+  function aplicarHorario() {
+    var cat = categoriaDe(empleadoActual);
+    var horario = horarioPorTipo(selTipo.value, cat);
+    if (horario) {
+      inpEntrada.value = horario.entrada;
+      inpSalida.value = horario.salida;
+    } else {
+      inpEntrada.value = "";
+      inpSalida.value = "";
     }
+    actualizarCalcHE();
   }
   inpEntrada.addEventListener("change", actualizarCalcHE);
   inpSalida.addEventListener("change", actualizarCalcHE);
-  selTipo.addEventListener("change", actualizarHoras);
+  selTipo.addEventListener("change", function () { actualizarHoras(); aplicarHorario(); });
   actualizarHoras();
+  aplicarHorario();
 
   fila.appendChild(selTipo);
   fila.appendChild(inpHoras);
@@ -472,6 +486,9 @@ function crearTarjetaDia(dia) {
       var h = calcularHorasHE(inpEntrada.value, inpSalida.value);
       lblH.textContent = h ? h + " hora(s)" : "0 horas";
       inpHoras.value = h || 1;
+      if (inpEntrada.value && inpSalida.value) {
+        inpDesc.value = inpEntrada.value + " - " + inpSalida.value;
+      }
     }
     inpEntrada.addEventListener("change", actualizarCalcHE);
     inpSalida.addEventListener("change", actualizarCalcHE);
@@ -714,10 +731,12 @@ function registrar() {
         filas.forEach(function (fila) {
           var selTipo = fila.querySelector(".sel-tipo");
           var inpHoras = fila.querySelector(".inp-horas");
+          var inpEntrada = fila.querySelector(".inp-entrada");
+          var inpSalida = fila.querySelector(".inp-salida");
           var inpDesc = fila.querySelector(".inp-desc");
           var tipo = selTipo.value;
           if (tipo === "Dia Trabajado" && esFeriado(base.fecha)) tipo = "Feriado";
-          var horas = esPorHora(tipo) ? parseInt(inpHoras.value, 10) || 1 : 0;
+          var horas = calcularHorasHE(inpEntrada ? inpEntrada.value : "", inpSalida ? inpSalida.value : "") || parseInt(inpHoras.value, 10) || 0;
           var monto = esPorHora(tipo) ? precioDe(tipo) * horas : precioDe(tipo);
           nuevos.push(Object.assign({}, base, {
             tipo: tipo,
