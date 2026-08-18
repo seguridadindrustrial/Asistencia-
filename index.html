@@ -41,6 +41,9 @@
   .dia-botones button.activo-si { background: #16a34a; color: #fff; border-color: #16a34a; }
   .dia-botones button.activo-no { background: #64748b; color: #fff; border-color: #64748b; }
   .inp-desc, .sel-he, .inp-he-horas, .sel-tipo, .inp-horas { margin-bottom: 9px; }
+  .inp-he-times { display: flex; gap: 8px; align-items: center; margin-bottom: 9px; }
+  .inp-he-times input[type="time"] { flex: 1; padding: 13px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
+  .lbl-horas { font-size: 14px; color: #475569; font-weight: 600; white-space: nowrap; }
   .inp-desc::placeholder { color: #94a3b8; }
   .trabajo { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; padding: 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
   .btn-quitar { align-self: flex-end; background: #fee2e2; color: #991b1b; padding: 8px 14px; font-size: 14px; border-radius: 8px; }
@@ -289,6 +292,16 @@ function tiposDeDia(dia) {
   return dia === "Domingo" ? lista.domingo : lista["entre semana"];
 }
 
+function calcularHorasHE(entrada, salida) {
+  if (!entrada || !salida) return 0;
+  var pE = entrada.split(":"), pS = salida.split(":");
+  var minE = parseInt(pE[0]) * 60 + parseInt(pE[1]);
+  var minS = parseInt(pS[0]) * 60 + parseInt(pS[1]);
+  var diff = minS - minE;
+  if (diff <= 0) diff += 1440;
+  return Math.round(diff / 60 * 100) / 100;
+}
+
 function crearFilaTrabajo(dia) {
   var fila = document.createElement("div");
   fila.className = "trabajo";
@@ -304,6 +317,22 @@ function crearFilaTrabajo(dia) {
   inpHoras.style.display = "none";
   inpHoras.placeholder = "Horas";
 
+  var inpHE = document.createElement("div");
+  inpHE.className = "inp-he-times hidden";
+  inpHE.style.display = "none";
+  var inpEntrada = document.createElement("input");
+  inpEntrada.type = "time";
+  inpEntrada.className = "inp-entrada";
+  var inpSalida = document.createElement("input");
+  inpSalida.type = "time";
+  inpSalida.className = "inp-salida";
+  var lblH = document.createElement("div");
+  lblH.className = "lbl-horas";
+  lblH.textContent = "0 horas";
+  inpHE.appendChild(inpEntrada);
+  inpHE.appendChild(inpSalida);
+  inpHE.appendChild(lblH);
+
   var inpDesc = document.createElement("input");
   inpDesc.type = "text";
   inpDesc.className = "inp-desc";
@@ -318,18 +347,33 @@ function crearFilaTrabajo(dia) {
 
   function actualizarHoras() {
     if (esPorHora(selTipo.value)) {
-      inpHoras.classList.remove("hidden");
-      inpHoras.style.display = "";
-    } else {
+      inpHE.classList.remove("hidden");
+      inpHE.style.display = "";
       inpHoras.classList.add("hidden");
       inpHoras.style.display = "none";
+    } else {
+      inpHE.classList.add("hidden");
+      inpHE.style.display = "none";
+      inpHoras.classList.remove("hidden");
+      inpHoras.style.display = "";
     }
   }
+  function actualizarCalcHE() {
+    var h = calcularHorasHE(inpEntrada.value, inpSalida.value);
+    lblH.textContent = h ? h + " hora(s)" : "0 horas";
+    inpHoras.value = h || 1;
+    if (inpEntrada.value && inpSalida.value) {
+      inpDesc.value = inpEntrada.value + " - " + inpSalida.value;
+    }
+  }
+  inpEntrada.addEventListener("change", actualizarCalcHE);
+  inpSalida.addEventListener("change", actualizarCalcHE);
   selTipo.addEventListener("change", actualizarHoras);
   actualizarHoras();
 
   fila.appendChild(selTipo);
   fila.appendChild(inpHoras);
+  fila.appendChild(inpHE);
   fila.appendChild(inpDesc);
   fila.appendChild(btnQuitar);
   return fila;
@@ -405,14 +449,39 @@ function crearTarjetaDia(dia) {
     inpHoras.type = "number";
     inpHoras.min = "1";
     inpHoras.value = "1";
-    inpHoras.className = "inp-he-horas";
+    inpHoras.className = "inp-he-horas hidden";
+    inpHoras.style.display = "none";
     inpHoras.placeholder = "Cantidad de horas";
+
+    var inpHE = document.createElement("div");
+    inpHE.className = "inp-he-times";
+    var inpEntrada = document.createElement("input");
+    inpEntrada.type = "time";
+    inpEntrada.className = "inp-entrada";
+    var inpSalida = document.createElement("input");
+    inpSalida.type = "time";
+    inpSalida.className = "inp-salida";
+    var lblH = document.createElement("div");
+    lblH.className = "lbl-horas";
+    lblH.textContent = "0 horas";
+    inpHE.appendChild(inpEntrada);
+    inpHE.appendChild(inpSalida);
+    inpHE.appendChild(lblH);
+
+    function actualizarCalcHE() {
+      var h = calcularHorasHE(inpEntrada.value, inpSalida.value);
+      lblH.textContent = h ? h + " hora(s)" : "0 horas";
+      inpHoras.value = h || 1;
+    }
+    inpEntrada.addEventListener("change", actualizarCalcHE);
+    inpSalida.addEventListener("change", actualizarCalcHE);
 
     var inpDesc = document.createElement("input");
     inpDesc.type = "text";
     inpDesc.className = "inp-desc";
     inpDesc.placeholder = "Descripción (opcional)";
 
+    cont.appendChild(inpHE);
     cont.appendChild(inpHoras);
     cont.appendChild(inpDesc);
   } else {
@@ -429,11 +498,6 @@ function crearTarjetaDia(dia) {
     card.noExplicito = false;
     cont.classList.remove("hidden");
     cont.style.display = "";
-    var heHoras = cont.querySelector(".inp-he-horas");
-    if (heHoras) {
-      heHoras.classList.remove("hidden");
-      heHoras.style.display = "";
-    }
   });
   btnNo.addEventListener("click", function () {
     btnNo.classList.add("activo-no");
@@ -442,14 +506,20 @@ function crearTarjetaDia(dia) {
     cont.classList.add("hidden");
     cont.style.display = "none";
     var lista = cont.querySelector(".lista-trabajos");
-    if (lista) lista.innerHTML = "";
+    if (lista) {
+      var filas = lista.querySelectorAll(".trabajo");
+      filas.forEach(function (f) { f.remove(); });
+    }
     var descs = cont.querySelectorAll(".inp-desc");
     descs.forEach(function (d) { d.value = ""; });
-    var heHoras = cont.querySelector(".inp-he-horas");
-    if (heHoras) {
-      heHoras.classList.add("hidden");
-      heHoras.style.display = "none";
-    }
+    var entradas = cont.querySelectorAll(".inp-entrada");
+    entradas.forEach(function (e) { e.value = ""; });
+    var salidas = cont.querySelectorAll(".inp-salida");
+    salidas.forEach(function (s) { s.value = ""; });
+    var heHoras = cont.querySelectorAll(".inp-he-horas");
+    heHoras.forEach(function (h) { h.value = "1"; });
+    var lbls = cont.querySelectorAll(".lbl-horas");
+    lbls.forEach(function (l) { l.textContent = "0 horas"; });
   });
 
   var btnQuitarDia = document.createElement("button");
@@ -658,9 +728,10 @@ function registrar() {
         });
         marcarFinalizado(dia);
       } else if (modo === "fijo") {
-        var inpHoras = card.querySelector(".inp-he-horas");
+        var inpEntrada = card.querySelector(".inp-entrada");
+        var inpSalida = card.querySelector(".inp-salida");
+        var horas = calcularHorasHE(inpEntrada.value, inpSalida.value) || 1;
         var inpDesc = card.querySelector(".inp-desc");
-        var horas = parseInt(inpHoras.value, 10) || 1;
         nuevos.push(Object.assign({}, base, {
           tipo: "Horas Extras",
           horas: horas,
