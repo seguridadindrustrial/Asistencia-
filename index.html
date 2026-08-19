@@ -137,7 +137,7 @@ const TIPOS_TECNICO_FIJO = {
 };
 
 const TIPOS_TECNICO_AVANCE = {
-  "entre semana": ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada", "Horas Extras"],
+  "entre semana": ["Dia Trabajado", "Guardia Nocturna", "Trabajo Nocturno", "Trabajo de Madrugada"],
   "domingo": ["Domingo Trabajado", "Trabajo Especial", "Guardia Nocturna", "Trabajo de Madrugada"]
 };
 
@@ -305,12 +305,13 @@ function calcularHorasHE(entrada, salida) {
 function horarioPorTipo(tipo, categoria) {
   if (categoria === "Porteros") {
     if (tipo === "Trabajo Nocturno" || tipo === "Guardia Nocturna") return { entrada: "16:00", salida: "22:00" };
-    if (tipo !== "Horas Extras") return { entrada: "07:00", salida: "15:00" };
+    if (tipo === "Horas Extras") return { entrada: "15:00", salida: "" };
+    return { entrada: "07:00", salida: "15:00" };
   }
   if (tipo === "Trabajo Nocturno" || tipo === "Guardia Nocturna" || tipo === "Trabajo Nocturno Avances") return { entrada: "18:00", salida: "23:00" };
   if (tipo === "Trabajo de Madrugada") return { entrada: "00:00", salida: "07:00" };
-  if (tipo !== "Horas Extras") return { entrada: "08:00", salida: "17:00" };
-  return null;
+  if (tipo === "Horas Extras") return { entrada: "17:00", salida: "" };
+  return { entrada: "08:00", salida: "17:00" };
 }
 
 function crearFilaTrabajo(dia) {
@@ -369,9 +370,6 @@ function crearFilaTrabajo(dia) {
     var h = calcularHorasHE(inpEntrada.value, inpSalida.value);
     lblH.textContent = h ? h + " hora(s)" : "0 horas";
     inpHoras.value = h || 1;
-    if (inpEntrada.value && inpSalida.value) {
-      inpDesc.value = inpEntrada.value + " - " + inpSalida.value;
-    }
   }
   function aplicarHorario() {
     if (!esPorHora(selTipo.value)) {
@@ -497,9 +495,6 @@ function crearTarjetaDia(dia) {
       var h = calcularHorasHE(inpEntrada.value, inpSalida.value);
       lblH.textContent = h ? h + " hora(s)" : "0 horas";
       inpHoras.value = h || 1;
-      if (inpEntrada.value && inpSalida.value) {
-        inpDesc.value = inpEntrada.value + " - " + inpSalida.value;
-      }
     }
     inpEntrada.addEventListener("change", actualizarCalcHE);
     inpSalida.addEventListener("change", actualizarCalcHE);
