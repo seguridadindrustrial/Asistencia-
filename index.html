@@ -360,13 +360,9 @@ function crearFilaTrabajo(dia) {
     if (esPorHora(selTipo.value)) {
       inpHE.classList.remove("hidden");
       inpHE.style.display = "";
-      inpHoras.classList.add("hidden");
-      inpHoras.style.display = "none";
     } else {
       inpHE.classList.add("hidden");
       inpHE.style.display = "none";
-      inpHoras.classList.remove("hidden");
-      inpHoras.style.display = "";
     }
   }
   function actualizarCalcHE() {
@@ -378,6 +374,13 @@ function crearFilaTrabajo(dia) {
     }
   }
   function aplicarHorario() {
+    if (!esPorHora(selTipo.value)) {
+      inpEntrada.value = "";
+      inpSalida.value = "";
+      lblH.textContent = "0 horas";
+      inpHoras.value = "1";
+      return;
+    }
     var cat = categoriaDe(empleadoActual);
     var horario = horarioPorTipo(selTipo.value, cat);
     if (horario) {
@@ -395,7 +398,6 @@ function crearFilaTrabajo(dia) {
   actualizarHoras();
 
   fila.appendChild(selTipo);
-  fila.appendChild(inpHoras);
   fila.appendChild(inpHE);
   fila.appendChild(inpDesc);
   fila.appendChild(btnQuitar);
@@ -508,7 +510,6 @@ function crearTarjetaDia(dia) {
     inpDesc.placeholder = "Descripción (opcional)";
 
     cont.appendChild(inpHE);
-    cont.appendChild(inpHoras);
     cont.appendChild(inpDesc);
   } else {
     var inpDesc = document.createElement("input");
@@ -739,11 +740,12 @@ function registrar() {
         var filas = card.querySelectorAll(".lista-trabajos .trabajo");
         filas.forEach(function (fila) {
           var selTipo = fila.querySelector(".sel-tipo");
-          var inpHoras = fila.querySelector(".inp-horas");
+          var inpEntrada = fila.querySelector(".inp-entrada");
+          var inpSalida = fila.querySelector(".inp-salida");
           var inpDesc = fila.querySelector(".inp-desc");
           var tipo = selTipo.value;
           if (tipo === "Dia Trabajado" && esFeriado(base.fecha)) tipo = "Feriado";
-          var horas = esPorHora(tipo) ? parseInt(inpHoras.value, 10) || 1 : 0;
+          var horas = esPorHora(tipo) ? calcularHorasHE(inpEntrada.value, inpSalida.value) || 1 : 0;
           var monto = esPorHora(tipo) ? precioDe(tipo) * horas : precioDe(tipo);
           nuevos.push(Object.assign({}, base, {
             tipo: tipo,
