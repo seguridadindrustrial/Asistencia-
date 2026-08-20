@@ -720,11 +720,19 @@ function registrar() {
   }
 
   var descVacios = 0;
+  var cat = categoriaDe(empleadoActual);
   cards.forEach(function (card) {
     var btnSi = card.querySelector(".dia-botones button:first-child");
     if (!btnSi.classList.contains("activo-si")) return;
     card.querySelectorAll(".inp-desc").forEach(function (d) {
-      if (!d.value.trim()) descVacios++;
+      if (d.value.trim()) return;
+      var fila = d.closest(".trabajo");
+      if (fila) {
+        var tipo = fila.querySelector(".sel-tipo").value;
+        if (tipo === "Guardia Nocturna" && (cat === "Tecnicos Fijo" || cat === "Tecnicos Avance")) return;
+        if (tipo === "Dia Trabajado" && cat === "O&L Avance") return;
+      }
+      descVacios++;
     });
   });
   if (descVacios) {
