@@ -730,7 +730,7 @@ function registrar() {
       if (fila) {
         var tipo = fila.querySelector(".sel-tipo").value;
         if (tipo === "Guardia Nocturna" && (cat === "Tecnicos Fijo" || cat === "Tecnicos Avance")) return;
-        if (tipo === "Dia Trabajado" && cat === "O&L Avance") return;
+        if (tipo === "Dia Trabajado" && (cat === "O&L Avance" || cat === "O&L Fijo" || cat === "Tecnicos Avance")) return;
       }
       descVacios++;
     });
