@@ -393,6 +393,10 @@ function crearFilaTrabajo(dia) {
   inpDesc.type = "text";
   inpDesc.className = "inp-desc";
   inpDesc.placeholder = "Descripción (opcional)";
+  if (categoriaDe(empleadoActual) === "Porteros") {
+    inpDesc.classList.add("hidden");
+    inpDesc.style.display = "none";
+  }
 
   var btnQuitar = document.createElement("button");
   btnQuitar.type = "button";
@@ -760,6 +764,7 @@ function registrar() {
     var btnSi = card.querySelector(".dia-botones button:first-child");
     if (!btnSi.classList.contains("activo-si")) return;
     card.querySelectorAll(".inp-desc").forEach(function (d) {
+      if (d.classList.contains("hidden")) return;
       if (d.value.trim()) return;
       var fila = d.closest(".trabajo");
       if (fila) {
