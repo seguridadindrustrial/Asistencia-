@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Registro de Asistencia</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: #f0f4f8; min-height: 100vh; padding: 16px; }
@@ -127,6 +129,18 @@
 </div>
 
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAhh3Y0hJDVA_z4WSQeEIH-EPch5qlRldA",
+  authDomain: "asistencia-bfccf.firebaseapp.com",
+  databaseURL: "https://asistencia-bfccf-default-rtdb.firebaseio.com",
+  projectId: "asistencia-bfccf",
+  storageBucket: "asistencia-bfccf.firebasestorage.app",
+  messagingSenderId: "603101536028",
+  appId: "1:603101536028:web:ffcc70eb7945e7131ee4d9"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+
 const ADMIN_PASSWORD = "chevettexwl928";
 
 const TIPOS_POR_HORA = ["Horas Extras"];
@@ -218,31 +232,25 @@ const EMPLEADOS = [
 ];
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-const STORAGE_KEY = "registros_asistencia";
-const FINALIZADOS_KEY = "asistencias_finalizados";
 
 let registros = [];
 let empleadoActual = null;
 let diasQuitados = [];
+let finalizadosCache = [];
 
-function cargarRegistros() {
-  try {
-    var crudos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    registros = crudos.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
-  } catch (e) { registros = []; }
-}
-function guardarRegistros() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
-}
-function cargarFinalizados() {
-  try {
-    var f = JSON.parse(localStorage.getItem(FINALIZADOS_KEY)) || [];
-    return f.filter(function (x) { return x && x.cedula && x.semana && x.dia; });
-  } catch (e) { return []; }
-}
-function guardarFinalizados(f) {
-  localStorage.setItem(FINALIZADOS_KEY, JSON.stringify(f));
-}
+db.ref("registros").on("value", function (snap) {
+  var data = snap.val() || [];
+  registros = Array.isArray(data) ? data.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; }) : [];
+});
+db.ref("finalizados").on("value", function (snap) {
+  var data = snap.val() || [];
+  finalizadosCache = Array.isArray(data) ? data.filter(function (x) { return x && x.cedula && x.semana && x.dia; }) : [];
+});
+
+function cargarRegistros() {}
+function guardarRegistros() { db.ref("registros").set(registros); }
+function cargarFinalizados() { return finalizadosCache; }
+function guardarFinalizados(f) { db.ref("finalizados").set(f); }
 function mostrarMensaje(el, texto, tipo) {
   el.textContent = texto;
   el.className = "mensaje " + tipo;
@@ -1097,7 +1105,6 @@ document.getElementById("btnNomina1").addEventListener("click", descargarNomina1
 document.getElementById("btnNomina2").addEventListener("click", descargarNomina2);
 document.getElementById("btnLimpiar").addEventListener("click", limpiar);
 
-cargarRegistros();
 document.getElementById("cedula").focus();
 </script>
 </body>
