@@ -240,14 +240,16 @@ let finalizadosCache = [];
 
 db.ref("registros").on("value", function (snap) {
   var data = snap.val();
-  if (!data) { registros = []; return; }
-  if (Array.isArray(data)) registros = data.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
+  if (!data) { registros = []; } else if (Array.isArray(data)) registros = data.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
   else registros = Object.keys(data).map(function (k) { return data[k]; }).filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
+  if (!document.getElementById("vistaAdmin").classList.contains("hidden")) {
+    cargarSemanasAdmin();
+    renderAdmin();
+  }
 });
 db.ref("finalizados").on("value", function (snap) {
   var data = snap.val();
-  if (!data) { finalizadosCache = []; return; }
-  if (Array.isArray(data)) finalizadosCache = data.filter(function (x) { return x && x.cedula && x.semana && x.dia; });
+  if (!data) { finalizadosCache = []; } else if (Array.isArray(data)) finalizadosCache = data.filter(function (x) { return x && x.cedula && x.semana && x.dia; });
   else finalizadosCache = Object.keys(data).map(function (k) { return data[k]; }).filter(function (x) { return x && x.cedula && x.semana && x.dia; });
 });
 
