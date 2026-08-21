@@ -239,12 +239,37 @@ let diasQuitados = [];
 let finalizadosCache = [];
 
 db.ref("registros").on("value", function (snap) {
-  var data = snap.val() || [];
-  registros = Array.isArray(data) ? data.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; }) : [];
+  var data = snap.val();
+  if (!data) { registros = []; return; }
+  if (Array.isArray(data)) registros = data.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
+  else registros = Object.keys(data).map(function (k) { return data[k]; }).filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
 });
 db.ref("finalizados").on("value", function (snap) {
-  var data = snap.val() || [];
-  finalizadosCache = Array.isArray(data) ? data.filter(function (x) { return x && x.cedula && x.semana && x.dia; }) : [];
+  var data = snap.val();
+  if (!data) { finalizadosCache = []; return; }
+  if (Array.isArray(data)) finalizadosCache = data.filter(function (x) { return x && x.cedula && x.semana && x.dia; });
+  else finalizadosCache = Object.keys(data).map(function (k) { return data[k]; }).filter(function (x) { return x && x.cedula && x.semana && x.dia; });
+});
+
+db.ref("registros").once("value").then(function (snap) {
+  if (snap.val()) return;
+  try {
+    var viejos = JSON.parse(localStorage.getItem("registros_asistencia")) || [];
+    if (viejos.length) {
+      var filtrados = viejos.filter(function (r) { return r && r.tipo && typeof r.monto === "number"; });
+      if (filtrados.length) db.ref("registros").set(filtrados);
+    }
+  } catch (e) {}
+});
+db.ref("finalizados").once("value").then(function (snap) {
+  if (snap.val()) return;
+  try {
+    var viejos = JSON.parse(localStorage.getItem("asistencias_finalizados")) || [];
+    if (viejos.length) {
+      var filtrados = viejos.filter(function (x) { return x && x.cedula && x.semana && x.dia; });
+      if (filtrados.length) db.ref("finalizados").set(filtrados);
+    }
+  } catch (e) {}
 });
 
 function cargarRegistros() {}
